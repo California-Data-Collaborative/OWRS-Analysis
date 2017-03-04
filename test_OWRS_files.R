@@ -4,9 +4,6 @@ library(rgdal)
 library(RateParser)
 library(yaml)
 
-this.dir <- dirname(parent.frame(2)$ofile) 
-setwd(this.dir)
-
 #import sample data and give the data parameters used in the owrs files that are not in the original data
 df_smc <- santamonica
 names(df_smc) <- c( "cust_id", "usage_ccf", "usage_month", "usage_year",  "cust_class", "usage_date", "cust_class_from-utility")
@@ -27,7 +24,7 @@ df_sample <- tbl_df(df_smc) %>%
 customer_classes <- c("RESIDENTIAL_SINGLE" 
                       #"RESIDENTIAL_MULTI",
                       #"COMMERCIAL"
-                      )
+)
 #End
 
 #Retrieve the directories and files in the directores from the Open-Water-Specification-File directory 
@@ -39,30 +36,43 @@ numOfFiles <- length(directory_names)
 rm(file_names, utilityID)
 file_names <- vector()
 utilityID <- vector()
+error <- vector()
 
 for(i in 1:numOfFiles)
 {
   
   setwd(paste(c(directory_names[i],"/"), collapse = ''))
-
+  
   #Need to add error checking in case someone writes a non owrs file name
   tempFileName <- unlist(list.files(pattern = "\\.owrs$"))
-  file_names <- c(file_names, tempFileName)
   #End
-
-  #Retrieve Utility ID from directory name
-  tempUtilityID <- as.numeric(gsub("\\D", "", directory_names[i]))
-  utilityID <- c(utilityID, tempUtilityID)
-  #End
-
-  rm(tempFileName, tempUtilityID)
+  
+  if(length(tempFileName) == 0)
+  {
+    error <- c(error, i)
+  }
+  else
+  {
+    #Retrieve Utility ID from directory name
+    file_names <- c(file_names, tempFileName)
+    tempUtilityID <- as.numeric(gsub("\\D", "", directory_names[i]))
+    utilityID <- c(utilityID, tempUtilityID)
+    rm(tempUtilityID)
+    #End
+  }
+  
+  rm(tempFileName)
   setwd("../")
 }
 
 setwd("../../../WaterRateTester/")
 #End
 
-
+for(i in 1: length(error))
+{
+  directory_names <- directory_names[-error]
+}
+numOfFiles <- numOfFiles - length(error)
 
 
 #Remove Previous Data and reinitialize the df_bill data frame
@@ -126,8 +136,8 @@ for(i in 1:(numOfFiles))
       {
         for(j in 1:length(customer_classes))
         {
-         tryCatch(
-           {
+          tryCatch(
+            {
               df_class <- df_sample %>% filter(cust_class == customer_classes[j])
               
               some_error <- TRUE
@@ -160,7 +170,7 @@ for(i in 1:(numOfFiles))
                 df_bill <- rbind(df_bill, df_temp)
               }
               #End
-            
+              
               #Remove Temporary Data Frame
               rm(df_temp)
               #End
@@ -223,6 +233,6 @@ hasCommodityCharge <- function(x) {
 #A function to retrieve Utility Rate Information from OWRS files
 getFileData <- function(fileNumber){
   return(read_owrs_file(paste(c("../Open-Water-Rate-Specification/full_utility_rates/California/",
-                         directory_names[fileNumber], "/", file_names[fileNumber]), collapse = '')))
+                                directory_names[fileNumber], "/", file_names[fileNumber]), collapse = '')))
 }
 #End
