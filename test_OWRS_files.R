@@ -155,7 +155,7 @@ for(i in 1:(numOfFiles))
           tryCatch(
             {
               #df_class <- df_sample %>% filter(cust_class == customer_classes[j])
-              df_adjustable_sample$usage_ccf <- 1
+              df_adjustable_sample$usage_ccf <- -1
               
               some_error <- TRUE
               #Create a Data Frame with Utility Information and Calculated Bill Information
@@ -180,28 +180,46 @@ for(i in 1:(numOfFiles))
               chargeRatio <- df_temp$service_charge/df_temp$bill 
               df_temp$charge_ratio <- round(chargeRatio, digits = 3)
               
-              df_bill <- rbind(df_bill, data.frame(df_temp[,c("utility_id", "utility_name", "bill_frequency", "bill_type", "usage_ccf", "cust_class", "service_charge", "commodity_charge", "charge_ratio", "bill")]))
+              df_temp_bill <- df_temp
+              #df_bill <- rbind(df_bill, data.frame(df_temp[,c("utility_id", "utility_name", "bill_frequency", "bill_type", "usage_ccf", "cust_class", "service_charge", "commodity_charge", "charge_ratio", "bill")]))
+              
+              if(df_temp_bill$bill_frequency == "bimonthly")
+                df_temp_bill$service_charge <- as.numeric(df_temp_bill$service_charge)/2
               
               #Add Full Utility Bill Information to the bill Data Frame
-              for(k in seq(0, 300, 10))
+              for(k in seq(150, 150, 1))
               {
-                df_temp_bill <- df_temp
-                df_adjustable_sample$usage_ccf <- k
+                
+                
+                if(df_temp_bill$bill_frequency == "bimonthly")
+                  df_adjustable_sample$usage_ccf <- 2*k else
+                  df_adjustable_sample$usage_ccf <- k
+                
                 df_temp_bill$usage_ccf <- k
                 
                 temp <- calculate_bill(df_adjustable_sample[1,], owrs_file)
                 
-                df_temp_bill$commodity_charge <- as.numeric(temp["commodity_charge"])
-                df_temp_bill$bill <- temp["bill"]
+                if(df_temp_bill$bill_frequency == "bimonthly")
+                {
+                 df_temp_bill$commodity_charge <- as.numeric(temp["commodity_charge"])/2
+                 df_temp_bill$bill <- as.numeric(temp["bill"])/2
+                }else
+                {
+                  df_temp_bill$commodity_charge <- as.numeric(temp["commodity_charge"])
+                  df_temp_bill$bill <- as.numeric(temp["bill"])
+                }
                 
-                chargeRatio <- df_temp$service_charge/df_temp_bill$bill 
-                df_temp_bill$charge_ratio <- round(chargeRatio, digits = 3)
+                
+                chargeRatio <- df_temp_bill$service_charge/df_temp_bill$bill 
+                df_temp_bill$charge_ratio <- round(chargeRatio, digits = 2)
                 
                 df_bill <- rbind(df_bill, data.frame(df_temp_bill[,c("utility_id", "utility_name", "bill_frequency", "bill_type", 
                                                                      "usage_ccf", "cust_class", "service_charge", "commodity_charge",
                                                                      "charge_ratio", "bill")]))
-                remove(df_temp_bill, temp)
+                remove(temp)
               }
+              remove(df_temp_bill)
+              
               some_error <- FALSE
             },
             error = function(cond)
@@ -322,16 +340,41 @@ rateStructurePie <-ggplot(Structure_DF, aes(x="", y=Value, fill= Rate_Structure)
 meanChargeRatio <- round(mean(as.numeric(df_final_bill$charge_ratio)), 3)
 
 commodity_scatter <- ggplot(df_final_bill, aes(x=usage_ccf, y=commodity_charge, color=utility_name)) +
-                            geom_point(shape=1) +  
+                            #geom_point(shape=1) +  
                             geom_line() +
                             labs(x = "Usage CCF", y = "Commodity Charge", color = "Utility") +
-                            ggtitle("Commodity Charge Vs. Usage CCF", subtitle = "At every 10 CCF from 0 to 300")
+                            ggtitle("Commodity Charge Vs. Usage CCF", subtitle = "At every 2 CCF from 0 to 100") +
+                            theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 25),
+                                  legend.position = "none")
 
 bill_scatter <- ggplot(df_final_bill, aes(x=usage_ccf, y=bill, color=utility_name)) +
-                            geom_point(shape=1) +    
-                            geom_smooth(method = loess, se = FALSE)  + 
+                            #geom_point(shape=1) +    
+                            geom_line()  + 
                             labs(x = "Usage CCF", y = "Bill", color = "Utility") +
-                            ggtitle("Total Bill Vs. Usage CCF", subtitle = "At every 10 CCF from 0 to 300")
+                            ggtitle("Total Bill Vs. Usage CCF", subtitle = "At every 2 CCF from 0 to 100")+
+                            theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 25),
+                            legend.position = "none")
+
+ratio_histogram <- ggplot(df_final_bill, aes(x=charge_ratio)) +
+                   geom_histogram(binwidth=.05, colour="black", fill="white")+
+                   labs(x = "Percent of Total Bill", y = "Number of utilities in that range")+
+                   ggtitle("Ratio of Service Charge to Total Bill at 16 Usage CCF")+
+                   scale_y_continuous(expand = c(0,0))+
+                   theme(axis.title.x = element_text(size = 15), axis.title.y = element_text(size = 15),
+                         axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10),
+                         title = element_text(size = 25)) +
+                   geom_vline(xintercept = mean(df_final_bill$charge_ratio), color = "red")
+
+bill_histogram <- ggplot(df_final_bill, aes(x=bill)) +
+                          geom_histogram(binwidth=100, colour="black", fill="white")+
+                          labs(x = "Bill Amount", y = "Number of Utilities in that Range")+
+                          ggtitle("Total Bill at 150 Usage CCF")+
+                          scale_y_continuous(expand = c(0,0), breaks = seq(0, 10, 1))+
+                          scale_x_continuous(breaks=seq(100,2000, 100))+
+                          theme(axis.title.x = element_text(size = 15), axis.title.y = element_text(size = 15),
+                                axis.text.x = element_text(size = 15), axis.text.y = element_text(size = 15),
+                                title = element_text(size = 25)) +
+                          geom_vline(xintercept = mean(df_final_bill$bill), color = "red")
 
 #A function to check if a service charge is present and if not adds a 0 value to the Data Frame
 hasServiceCharge <- function(x) {
