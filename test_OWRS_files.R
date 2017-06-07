@@ -6,6 +6,41 @@ library(rgdal)
 library(RateParser)
 library(yaml)
 
+#A function to check if a service charge is present and if not adds a 0 value to the Data Frame
+hasServiceCharge <- function(x) {
+  if(!"service_charge" %in% colnames(x))
+  {
+    x$service_charge <- 0
+  }
+  
+  return(x)
+}
+#End
+
+#A function to check if a commodity charge is present and if not adds a 0 value to the Data Frame
+hasCommodityCharge <- function(x) {
+  if(!"service_charge" %in% colnames(x))
+  {
+    x$commodity_charge <- 0
+  }
+  
+  return(x)
+}
+#End
+
+#A function to retrieve Utility Rate Information from OWRS files
+getFileData <- function(fileNumber){
+  return(read_owrs_file(paste(c("../Open-Water-Rate-Specification/full_utility_rates/California/",
+                                directory_names[fileNumber], "/", file_names[fileNumber]), collapse = '')))
+}
+#End
+
+
+printCurrency <- function(Number)
+{
+  paste('$', Number, sep = "")
+}
+
 setwd("../../Documents/WaterRateTester/")
 
 #Declare the customer classes to be tested for each utility 
@@ -187,7 +222,7 @@ for(i in 1:(numOfFiles))
                 df_temp_bill$service_charge <- as.numeric(df_temp_bill$service_charge)/2
               
               #Add Full Utility Bill Information to the bill Data Frame
-              for(k in seq(150, 150, 1))
+              for(k in seq(1, 15, 1))
               {
                 
                 
@@ -375,38 +410,3 @@ bill_histogram <- ggplot(df_final_bill, aes(x=bill)) +
                                 axis.text.x = element_text(size = 15), axis.text.y = element_text(size = 15),
                                 title = element_text(size = 25)) +
                           geom_vline(xintercept = mean(df_final_bill$bill), color = "red")
-
-#A function to check if a service charge is present and if not adds a 0 value to the Data Frame
-hasServiceCharge <- function(x) {
-  if(!"service_charge" %in% colnames(x))
-  {
-    x$service_charge <- 0
-  }
-  
-  return(x)
-}
-#End
-
-#A function to check if a commodity charge is present and if not adds a 0 value to the Data Frame
-hasCommodityCharge <- function(x) {
-  if(!"service_charge" %in% colnames(x))
-  {
-    x$commodity_charge <- 0
-  }
-  
-  return(x)
-}
-#End
-
-#A function to retrieve Utility Rate Information from OWRS files
-getFileData <- function(fileNumber){
-  return(read_owrs_file(paste(c("../Open-Water-Rate-Specification/full_utility_rates/California/",
-                                directory_names[fileNumber], "/", file_names[fileNumber]), collapse = '')))
-}
-#End
-
-
-printCurrency <- function(Number)
-{
-  paste('$', Number, sep = "")
-}
