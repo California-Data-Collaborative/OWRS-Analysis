@@ -5,52 +5,18 @@ library(raster)
 library(rgdal)
 library(RateParser)
 library(yaml)
+library(purrr)
+
+source("R/utils.R")
 
 #change for The scatter plots (If start = end the process will be a lot faster if only concerned with histograms and bar/pie charts)
 start <- 0;
-end <- 100;
+end <- 0;
 interval <- 5;
 
 #The usage_ccf to evaluate for the histograms and bar chart
 singleTargetValue <- 15;
 
-
-#A function to check if a service charge is present and if not adds a 0 value to the Data Frame
-hasServiceCharge <- function(x) {
-  if(!"service_charge" %in% colnames(x))
-  {
-    x$service_charge <- 0
-  }
-
-  return(x)
-}
-#End
-
-#A function to check if a commodity charge is present and if not adds a 0 value to the Data Frame
-hasCommodityCharge <- function(x) {
-  if(!"service_charge" %in% colnames(x))
-  {
-    x$commodity_charge <- 0
-  }
-
-  return(x)
-}
-#End
-
-#A function to retrieve Utility Rate Information from OWRS files
-getFileData <- function(fileNumber){
-  return(read_owrs_file(paste(c("../Open-Water-Rate-Specification/full_utility_rates/California/",
-                                directory_names[fileNumber], "/", file_names[fileNumber]), collapse = '')))
-}
-#End
-
-
-printCurrency <- function(Number)
-{
-  paste('$', Number, sep = "")
-}
-
-setwd("../../Documents/WaterRateTester/")
 
 #Declare the customer classes to be tested for each utility
 customer_classes <- c("RESIDENTIAL_SINGLE"
@@ -86,53 +52,27 @@ test_usage_ccfs <- c(1, 10, 25, 50, 100, 200, 300)
 #End
 
 #Retrieve the directories and files in the directores from the Open-Water-Specification-File directory
-setwd("../Open-Water-Rate-Specification/full_utility_rates/California");
-directory_names <- list.files()
+owrs_path <- "../Open-Water-Rate-Specification/full_utility_rates/California";
+directory_names <- list.files(path=owrs_path)
 
-numOfFiles <- length(directory_names)
+#TODO insert the filename gathering functioon here
+df_OWRS <- tbl_df(as.data.frame(list("filepath"=getFileNames(owrs_path)), stringsAsFactors=FALSE)) %>% 
+  
+  mutate(owrs_directory = map(filepath, strsplit, split="/") %>% map(c(1,1))) %>%
+  
+  mutate(filename = map(filepath, strsplit, split="/") %>% map(c(1,2))) %>%
+  
+  mutate(utility_id = map(owrs_directory, strsplit, split=" ") %>%  
+                      map(1) %>%map(tail, n=1) %>%
+                      map(gsub, pattern="\\D", replacement="") %>%
+                      map(as.numeric)) %>%
+  
+  mutate(effective_date = extract_date(filename) ) %>% 
+  mutate(utility_name = sapply(as.character(owrs_directory), extract_utility_name) )
+  
 
-rm(file_names, utilityID)
-file_names <- vector()
-utilityID <- vector()
-error <- vector()
-
-for(i in 1:numOfFiles)
-{
-
-  setwd(paste(c(directory_names[i],"/"), collapse = ''))
-
-  #Need to add error checking in case someone writes a non owrs file name
-  tempFileName <- unlist(list.files(pattern = "\\.owrs$"))
-  #End
-
-  if(length(tempFileName) == 0)
-  {
-    error <- c(error, i)
-  }
-  else
-  {
-    #Retrieve Utility ID from directory name
-    file_names <- c(file_names, tempFileName)
-    tempUtilityID <- as.numeric(gsub("\\D", "", directory_names[i]))
-    utilityID <- c(utilityID, tempUtilityID)
-    rm(tempUtilityID)
-    #End
-  }
-
-  rm(tempFileName)
-  setwd("../")
-}
-
-setwd("../../../WaterRateTester/")
-#End
-if(length(error) > 0)
-{
-  for(i in 1: length(error))
-  {
-    directory_names <- directory_names[-error]
-  }
-  numOfFiles <- numOfFiles - length(error)
-}
+for(x in df_OWRS$owrs_directory)
+  print(extract_utility_name(x))
 
 
 #Remove Previous Data and reinitialize the df_bill data frame
@@ -170,7 +110,7 @@ for(i in 1:(numOfFiles))
       #End
 
       #Open OWRS file
-      owrs_file <- getFileData(index)
+      owrs_file <- getFileData(owrs_path, directory_names[index], file_names[index])
       file_format_error <- FALSE
       #End
     },
@@ -196,6 +136,8 @@ for(i in 1:(numOfFiles))
       {
         for(j in 1:length(customer_classes))
         {
+          current_class <- customer_classes[j]
+          
           tryCatch(
             {
               #df_class <- df_sample %>% filter(cust_class == customer_classes[j])
@@ -203,17 +145,16 @@ for(i in 1:(numOfFiles))
 
               some_error <- TRUE
               #Create a Data Frame with Utility Information and Calculated Bill Information
-              if(owrs_file$rate_structure$RESIDENTIAL_SINGLE$commodity_charge == "flat_rate*usage_ccf")
+              if(owrs_file$rate_structure[[current_class]]$commodity_charge == "flat_rate*usage_ccf")
               {
-                utility <- data.frame(utility_id = utilityID[index], utility_name = owrs_file$metadata$utility_name, bill_frequency = owrs_file$metadata$bill_frequency,
-                                      bill_type = "Uniform")
-                df_temp <- data.frame(utility, calculate_bill(df_adjustable_sample[1,], owrs_file))
+                bt <- "Uniform"
               } else
               {
-                utility <- data.frame(utility_id = utilityID[index], utility_name = owrs_file$metadata$utility_name, bill_frequency = owrs_file$metadata$bill_frequency,
-                                      bill_type = owrs_file$rate_structure$RESIDENTIAL_SINGLE$commodity_charge)
-                df_temp <- data.frame(utility, calculate_bill(df_adjustable_sample[1,], owrs_file))
+                bt <- owrs_file$rate_structure[[current_class]]$commodity_charge
               }
+              utility <- data.frame(utility_id = utilityID[index], utility_name = owrs_file$metadata$utility_name, bill_frequency = owrs_file$metadata$bill_frequency,
+                                    bill_type = bt)
+              df_temp <- data.frame(utility, calculate_bill(df_adjustable_sample[1,], owrs_file))
               #End
 
               #Check if service charge and commodity charge are in the data frame
