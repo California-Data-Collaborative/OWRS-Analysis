@@ -40,7 +40,7 @@ df_sample <- tbl_df(df_smc) %>%
          tariff_area = 1, turbine_meter = "No", senior = "no") %>%
   group_by(cust_class)
 
-df_adjustable_sample <- tbl_df(data.frame (usage_ccf = 0, usage_month = 3, hhsize = 4, meter_size = '3/4"', usage_zone = 1, landscape_area = 2000,
+df_adjustable_sample <- tbl_df(data.frame (usage_month = 3, hhsize = 4, meter_size = '3/4"', usage_zone = 1, landscape_area = 2000,
                                            et_amount = 2.0, wrap_customer = "No", irr_area = 2000, carw_customer = "No",
                                            season = "Winter", tax_exemption = "granted", lot_size_group = 3,
                                            temperature_zone = "Medium", pressure_zone = 1, water_font = "city_delivered",
@@ -48,8 +48,11 @@ df_adjustable_sample <- tbl_df(data.frame (usage_ccf = 0, usage_month = 3, hhsiz
                                            dwelling_units = 10, elevation_zone = 2, greater_than = "False",
                                            usage_indoor_budget_ccf = .3, meter_type = "Turbine", block = 1,
                                            tariff_area = 1, turbine_meter = "No", senior = "no", cust_class = customer_classes[1]))
-test_usage_ccfs <- c(1, 10, 25, 50, 100, 200, 300)
-#End
+
+df_usage <- as.data.frame(list("usage_ccf"=1:10, "cust_class"="RESIDENTIAL_SINGLE"))
+df_sample <-  left_join(df_usage, df_adjustable_sample, by="cust_class")
+
+
 
 #Retrieve the directories and files in the directores from the Open-Water-Specification-File directory
 owrs_path <- "../Open-Water-Rate-Specification/full_utility_rates/California";
@@ -67,19 +70,10 @@ df_OWRS <- tbl_df(as.data.frame(list("filepath"=getFileNames(owrs_path)), string
                       map(gsub, pattern="\\D", replacement="") %>%
                       map(as.numeric)) %>%
   
-  mutate(effective_date = extract_date(filename) ) %>% 
+  mutate(effective_date = sapply(filename, extract_date) ) %>% 
   mutate(utility_name = sapply(as.character(owrs_directory), extract_utility_name) )
-  
-
-for(x in df_OWRS$owrs_directory)
-  print(extract_utility_name(x))
 
 
-#Remove Previous Data and reinitialize the df_bill data frame
-rm(df_bill)
-df_bill <- data.frame(integer(), character(), character(), character(), double(), character(), double(), double(), double(), double())
-names(df_bill) <- c( "utility_id" ,"utility_name", "bill_frequency", "bill_type", "usage_ccf", "cust_class", "service_charge", "commodity_charge", "charge_ratio", "bill")
-#End
 
 #Declare Null Data Set
 df_NA <- data.frame(
@@ -90,184 +84,61 @@ df_NA <- data.frame(
   #usage_date = NA,
   service_charge = NA,
   commodity_charge = NA,
-  charge_ratio = NA,
+  percentFixed = NA,
   bill = NA
 )
 #End
 
 #Run through all the OWRS files and test if they are Readable and add the information to the data frame
-for(i in 1:(numOfFiles))
+
+for(i in 1:nrow(df_OWRS))
 {
+  if(i==1){
+    df_bill <- NULL
+  }
+  
   #Open OWRS file and retrieve important data
-  tryCatch(
+  owrs_file <- tryCatch({
+    #Open OWRS file
+    getFileData(owrs_path, df_OWRS[i,]$filepath)
+  },
+  error = function(cond){
+    #Display Error Message for specific files
+    message(paste("Format error in file:", df_OWRS[i,]$filepath, "\n", cond, "\n"))
+    return(NULL)
+  })
+  
+  
+  #If there is an error format the row data accordingly
+  if(is.null(owrs_file))
+  {
+    # utility <- data.frame(utility_id = df_OWRS[i,]$utility_id, 
+    #                       utility_name = df_OWRS[i,]$filename, 
+    #                       bill_frequency = "NA")
+    # df_temp <- data.frame(utility, df_NA)
+    # df_bill <- rbind(df_bill, df_temp)
+  } else
+  {
+    for(j in 1:length(customer_classes))
     {
-      #Declare Error Flags
-      file_format_error <- TRUE
-      #End
+      current_class <- customer_classes[j]
+  
+      df_temp <- tryCatch({
+        singleUtilitySim(df_sample, df_OWRS, owrs_file, current_class)
+      },
+      error = function(cond){
+        #Display Error Message for specific files
+        message(paste("Format error in file:", df_OWRS[i,]$filepath, "\n", cond, "\n"))
+        return(NULL)
+      }) 
 
-      #Set the index number for the file and directory vectors
-      index <- i
-      #End
-
-      #Open OWRS file
-      owrs_file <- getFileData(owrs_path, directory_names[index], file_names[index])
-      file_format_error <- FALSE
-      #End
-    },
-    error = function(cond)
-    {
-      #Display Error Message for specific files
-      message(paste("Format error in file:", file_names[index], "\n", cond, "\n"))
-      #End
-    },
-    finally =
-    {
-      #If there is an error format the row data accordingly
-      if(file_format_error)
-      {
-        utility <- data.frame(utility_id = utilityID[index], utility_name = file_names[index], bill_frequency = "NA")
-        df_temp <- data.frame(utility, df_NA)
-        df_bill <- rbind(df_bill, df_temp)
-
-        #Remove Temporary Data Frame
-        rm(df_temp)
-        #End
-      } else
-      {
-        for(j in 1:length(customer_classes))
-        {
-          current_class <- customer_classes[j]
-          
-          tryCatch(
-            {
-              #df_class <- df_sample %>% filter(cust_class == customer_classes[j])
-              df_adjustable_sample$usage_ccf <- -1
-
-              some_error <- TRUE
-              #Create a Data Frame with Utility Information and Calculated Bill Information
-              if(owrs_file$rate_structure[[current_class]]$commodity_charge == "flat_rate*usage_ccf")
-              {
-                bt <- "Uniform"
-              } else
-              {
-                bt <- owrs_file$rate_structure[[current_class]]$commodity_charge
-              }
-              utility <- data.frame(utility_id = utilityID[index], utility_name = owrs_file$metadata$utility_name, bill_frequency = owrs_file$metadata$bill_frequency,
-                                    bill_type = bt)
-              df_temp <- data.frame(utility, calculate_bill(df_adjustable_sample[1,], owrs_file))
-              #End
-
-              #Check if service charge and commodity charge are in the data frame
-              df_temp <- hasServiceCharge(df_temp)
-              df_temp <- hasCommodityCharge(df_temp)
-              #End
-
-              chargeRatio <- df_temp$service_charge/df_temp$bill
-              df_temp$charge_ratio <- round(chargeRatio, digits = 3)
-
-              df_temp_bill <- df_temp
-              #df_bill <- rbind(df_bill, data.frame(df_temp[,c("utility_id", "utility_name", "bill_frequency", "bill_type", "usage_ccf", "cust_class", "service_charge", "commodity_charge", "charge_ratio", "bill")]))
-
-              if(df_temp_bill$bill_frequency == "bimonthly")
-                df_temp_bill$service_charge <- as.numeric(df_temp_bill$service_charge)/2
-
-
-
-              #Add Full Utility Bill Information to the bill Data Frame
-              for(k in seq(start, end, interval))
-              {
-
-
-                if(df_temp_bill$bill_frequency == "bimonthly")
-                  df_adjustable_sample$usage_ccf <- 2*k else
-                  df_adjustable_sample$usage_ccf <- k
-
-                df_temp_bill$usage_ccf <- k
-
-                temp <- calculate_bill(df_adjustable_sample[1,], owrs_file)
-
-                if(df_temp_bill$bill_frequency == "bimonthly")
-                {
-                 df_temp_bill$commodity_charge <- as.numeric(temp["commodity_charge"])/2
-                 df_temp_bill$bill <- as.numeric(temp["bill"])/2
-                }else
-                {
-                  df_temp_bill$commodity_charge <- as.numeric(temp["commodity_charge"])
-                  df_temp_bill$bill <- as.numeric(temp["bill"])
-                }
-
-
-                chargeRatio <- df_temp_bill$service_charge/df_temp_bill$bill
-                df_temp_bill$charge_ratio <- round(chargeRatio, digits = 2)
-
-                df_bill <- rbind(df_bill, data.frame(df_temp_bill[,c("utility_id", "utility_name", "bill_frequency", "bill_type",
-                                                                     "usage_ccf", "cust_class", "service_charge", "commodity_charge",
-                                                                     "charge_ratio", "bill")]))
-                remove(temp)
-              }
-
-              value <- singleTargetValue - start
-
-              if(value %% interval != 0 || singleTargetValue > end || singleTargetValue < start)
-              {
-                if(df_temp_bill$bill_frequency == "bimonthly")
-                df_adjustable_sample$usage_ccf <- 2*singleTargetValue else
-                  df_adjustable_sample$usage_ccf <- singleTargetValue
-
-                df_temp_bill$usage_ccf <- singleTargetValue
-
-                temp <- calculate_bill(df_adjustable_sample[1,], owrs_file)
-
-                if(df_temp_bill$bill_frequency == "bimonthly")
-                {
-                  df_temp_bill$commodity_charge <- as.numeric(temp["commodity_charge"])/2
-                  df_temp_bill$bill <- as.numeric(temp["bill"])/2
-                }else
-                {
-                  df_temp_bill$commodity_charge <- as.numeric(temp["commodity_charge"])
-                  df_temp_bill$bill <- as.numeric(temp["bill"])
-                }
-
-
-                chargeRatio <- df_temp_bill$service_charge/df_temp_bill$bill
-                df_temp_bill$charge_ratio <- round(chargeRatio, digits = 2)
-
-                df_bill <- rbind(df_bill, data.frame(df_temp_bill[,c("utility_id", "utility_name", "bill_frequency", "bill_type",
-                                                                     "usage_ccf", "cust_class", "service_charge", "commodity_charge",
-                                                                     "charge_ratio", "bill")]))
-                remove(temp)
-              };
-
-              remove(df_temp_bill)
-
-              some_error <- FALSE
-            },
-            error = function(cond)
-            {
-              #Display Error Message for specific files
-              message(paste("Other error in file:", file_names[index], "\n", cond, "\n"))
-              #End
-            },
-            finally =
-            {
-              #Check if another error occured
-              if(some_error)
-              {
-                df_temp <- data.frame(utility, df_NA)
-                df_bill <- rbind(df_bill, df_temp)
-              }
-              #End
-
-              #Remove Temporary Data Frame
-              rm(df_temp)
-              #End
-            }
-          )
-        }
+      if(is.null(df_bill)){
+        df_bill <- df_temp
+      }else{
+        df_bill <- bind_rows(df_bill, df_temp)
       }
     }
-
-  )
+  }
 }
 #End
 
@@ -357,7 +228,7 @@ rateStructurePie <-ggplot(Structure_DF, aes(x="", y=Value, fill= Rate_Structure)
   geom_text(aes(x = "", y = Value/2 + c(0, cumsum(Value)[-length(Value)]), label = percent(Value/nrow(df_final_bill))), size=5) +
   ggtitle("Analysis of Rate Structure")  + theme(plot.title = element_text(lineheight=.8, face="bold")) + labs(fill = "Rate Structures")
 
-meanChargeRatio <- round(mean(as.numeric(df_final_bill$charge_ratio[df_final_bill$usage_ccf == singleTargetValue])), 3)
+meanpercentFixed <- round(mean(as.numeric(df_final_bill$percentFixed[df_final_bill$usage_ccf == singleTargetValue])), 3)
 
 commodity_scatter <- ggplot(df_final_bill, aes(x=usage_ccf, y=commodity_charge, color=utility_name)) +
                             #geom_point(shape=1) +
@@ -377,7 +248,7 @@ bill_scatter <- ggplot(df_final_bill, aes(x=usage_ccf, y=bill, color=utility_nam
 
 temp_df <- subset(df_final_bill, usage_ccf == singleTargetValue);
 
-ratio_histogram <- ggplot(temp_df, aes(x=charge_ratio)) +
+ratio_histogram <- ggplot(temp_df, aes(x=percentFixed)) +
                    geom_histogram(binwidth=.05, colour="black", fill="white")+
                    labs(x = "Percent of Total Bill", y = "Number of utilities in that range")+
                    ggtitle(paste("Ratio of Service Charge to Total Bill at", singleTargetValue, "Usage CCF"))+
@@ -385,7 +256,7 @@ ratio_histogram <- ggplot(temp_df, aes(x=charge_ratio)) +
                    theme(axis.title.x = element_text(size = 15), axis.title.y = element_text(size = 15),
                          axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10),
                          title = element_text(size = 25)) +
-                   geom_vline(xintercept = mean(temp_df$charge_ratio), color = "red")
+                   geom_vline(xintercept = mean(temp_df$percentFixed), color = "red")
 
 bill_histogram <- ggplot(temp_df, aes(x=bill)) +
                           geom_histogram(binwidth=(max(temp_df$bill)- min(temp_df$bill))/ round(length(temp_df$bill)/6), colour="black", fill="white")+
