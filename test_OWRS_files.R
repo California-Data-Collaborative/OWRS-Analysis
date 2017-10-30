@@ -56,7 +56,6 @@ df_sample <-  left_join(df_usage, df_adjustable_sample, by="cust_class")
 
 #Retrieve the directories and files in the directores from the Open-Water-Specification-File directory
 owrs_path <- "../Open-Water-Rate-Specification/full_utility_rates/California";
-directory_names <- list.files(path=owrs_path)
 
 #TODO insert the filename gathering functioon here
 df_OWRS <- tbl_df(as.data.frame(list("filepath"=getFileNames(owrs_path)), stringsAsFactors=FALSE)) %>% 
