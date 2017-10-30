@@ -13,7 +13,7 @@ standardize_OWRS_names <- function(owrs_file, current_class){
 }
 
 singleUtilitySim <- function(df_sample, df_OWRS, owrs_file, current_class){
-  
+
   owrs_file <- standardize_OWRS_names(owrs_file, current_class)
   
   if(owrs_file$rate_structure[[current_class]]$commodity_charge == "flat_rate*usage_ccf"){
@@ -54,8 +54,8 @@ singleUtilitySim <- function(df_sample, df_OWRS, owrs_file, current_class){
   # divide bill by two for comparison to monthly customers 
   if(isBimonthly){
     df_temp$service_charge <- df_temp$service_charge/2.0
-    df_temp$commodity_charge <- df_temp["commodity_charge"]/2.0
-    df_temp$bill <- df_temp["bill"]/2.0
+    df_temp$commodity_charge <- df_temp$commodity_charge/2.0
+    df_temp$bill <- df_temp$bill/2.0
   }
   
   # calculate percent of bill that comes from fixed charges
