@@ -101,7 +101,7 @@ calculate_bills_for_all_utilities <- function(df_OWRS, df_sample, owrs_path, cus
     if(i==1){
       df_bill <- NULL
     }
-    print(i)
+    
     #Open OWRS file and retrieve important data
     owrs_file <- tryCatch({
       #Open OWRS file
@@ -109,6 +109,7 @@ calculate_bills_for_all_utilities <- function(df_OWRS, df_sample, owrs_path, cus
     },
     error = function(cond){
       #Display Error Message for specific files
+      print(i)
       message(paste("Format error in file:", df_OWRS[i,]$filepath, "\n", cond, "\n"))
       return(NULL)
     })
@@ -126,6 +127,7 @@ calculate_bills_for_all_utilities <- function(df_OWRS, df_sample, owrs_path, cus
         },
         error = function(cond){
           #Display Error Message for specific files
+          print(i)
           message(paste("Format error in file:", df_OWRS[i,]$filepath, "\n", cond, "\n"))
           return(NULL)
         }) 

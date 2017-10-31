@@ -1,12 +1,20 @@
+---
+title: "OWRS Analysis"
+output: html_notebook
+---
+
+```{r, echo=FALSE}
 library(dplyr)
 library(ggplot2)
 library(scales)
 library(raster)
-library(rgdal)
 library(RateParser)
 library(yaml)
 library(purrr)
+```
 
+
+```{r, echo=FALSE}
 source("R/utils.R")
 source("R/plots.R")
 
@@ -35,13 +43,14 @@ df_sample <- tbl_df(df_smc) %>%
 
 df_adjustable_sample <- tbl_df(data.frame (usage_month = 7, days_in_period = 30,
                                            hhsize = 4, meter_size = '3/4"', usage_zone = 1, landscape_area = 2000,
-                                           et_amount = 7.0, wrap_customer = "No", irr_area = 2000, carw_customer = "No",
-                                           season = "Winter", tax_exemption = "granted", lot_size_group = 3,
-                                           temperature_zone = "Medium", pressure_zone = 1, water_font = "city_delivered",
-                                           city_limits = "inside_city", water_type = "potable", rate_class = "C1",
-                                           dwelling_units = 10, elevation_zone = 2, greater_than = "False",
-                                           usage_indoor_budget_ccf = .3, meter_type = "Turbine", block = 1,
-                                           tariff_area = 1, turbine_meter = "No", senior = "no", cust_class = customer_classes[1]))
+                                           et_amount = 7.0, wrap_customer = "No", irr_area = 2000, 
+                                           carw_customer = "No", season = "Winter", tax_exemption = "granted", 
+                                           lot_size_group = 3, temperature_zone = "Medium", pressure_zone = 1, 
+                                           water_font = "city_delivered", city_limits = "inside_city", 
+                                           water_type = "potable", rate_class = "C1", dwelling_units = 10, 
+                                           elevation_zone = 2, greater_than = "False", usage_indoor_budget_ccf = .3, 
+                                           meter_type = "Turbine", block = 1, tariff_area = 1, turbine_meter = "No",
+                                           senior = "no", cust_class = customer_classes[1]))
 
 #change for The scatter plots (If start = end the process will be a lot faster if only concerned with histograms and bar/pie charts)
 start <- 0;
@@ -83,6 +92,10 @@ df_final_bill <- tbl_df(df_bill) %>% filter(!is.na(bill)) %>%
          usage_ccf = ifelse(unit_type=="kgal", 1.33681*usage_ccf, usage_ccf)) %>% 
   arrange(utility_name)
 #End
+```
+
+```{r}
+#library(rgdal)
 
 #shape <- readOGR(dsn = "../Shapefiles", layer = "service_areas_cadc_with_utility_id")
 #shape <- merge(shape, df_final_bill, by = "utility_id")
@@ -96,24 +109,45 @@ df_final_bill <- tbl_df(df_bill) %>% filter(!is.na(bill)) %>%
 #zip(zipfile = "../Dropbox/CSV/shapefileZip", files = paste("TempShapeFiles", zipDemFiles, sep = "/"))
 
 #setwd("../../Documents/WaterRateTester/")
+```
 
-
+```{r}
 #The usage_ccf to evaluate for the histograms and bar chart
 singleTargetValue <- 10;
+```
 
-billFrequencyPie <- plot_bill_frequency_piechart(df_final_bill)
+```{r}
+plot_bill_frequency_piechart(df_final_bill)
+```
 
-meanBillPie <- plot_mean_bill_pie(df_final_bill, singleTargetValue)
+```{r}
+plot_mean_bill_pie(df_final_bill, singleTargetValue)
+```
 
-rateTypePie <- plot_rate_type_pie(df_final_bill)
+
+
+```{r}
+plot_rate_type_pie(df_final_bill)
+```
+
+```{r}
+plot_commodity_charges_vs_usage(df_final_bill, start, end, interval)
+```
+
+```{r}
+plot_bills_vs_usage(df_final_bill, start, end, interval)
+```
+
 
 
 meanpercentFixed <- round(mean(as.numeric(df_final_bill$percentFixed[df_final_bill$usage_ccf == singleTargetValue])), 3)
 
-commodity_scatter <- plot_commodity_charges_vs_usage(df_final_bill, start, end, interval)
 
-bill_scatter <- plot_bills_vs_usage(df_final_bill, start, end, interval)
+```{r}
+plot_ratio_histogram(df_final_bill, singleTargetValue)
+```
 
-ratio_histogram <- plot_ratio_histogram(df_final_bill, singleTargetValue)
+```{r}
+plot_bill_histogram(df_final_bill, singleTargetValue)
+```
 
-bill_histogram <- plot_bill_histogram(df_final_bill, singleTargetValue)
