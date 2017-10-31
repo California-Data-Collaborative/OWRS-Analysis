@@ -9,6 +9,15 @@ standardize_OWRS_names <- function(owrs_file, current_class){
   mask <- names(owrs_file$rate_structure[[current_class]]) == "flat_rate_commodity"
   names(owrs_file$rate_structure[[current_class]])[mask] <- "flat_rate"
   
+  if(owrs_file$rate_structure[[current_class]]$commodity_charge == "flat_rate_commodity*usage_ccf"){
+    owrs_file$rate_structure[[current_class]]$commodity_charge <- "flat_rate*usage_ccf"
+  }
+  
+  owrs_file$rate_structure[[current_class]]$fixed_drought_surcharge <- NULL
+  owrs_file$rate_structure[[current_class]]$variable_drought_surcharge <- NULL
+  owrs_file$rate_structure[[current_class]]$fixed_wastewater_charge <- NULL
+  owrs_file$rate_structure[[current_class]]$variable_wastewater_charge <- NULL
+  
   return(owrs_file)
 }
 
@@ -38,8 +47,12 @@ singleUtilitySim <- function(df_sample, df_OWRS, owrs_file, current_class){
   isBimonthly <- length(grep("[Bb][Ii]", df_temp$bill_frequency[1]))
   
   # double usage for bimonthly customers
-  if(isBimonthly==TRUE)
+  if(isBimonthly==TRUE){
     df_temp$usage_ccf <- 2*df_temp$usage_ccf
+    df_temp$days_in_period <- 61
+  }else{
+    df_temp$days_in_period <- 30
+  }
   
   #cal bill and validate service charge and commodity charge
   df_temp <- calculate_bill(df_temp, owrs_file)
