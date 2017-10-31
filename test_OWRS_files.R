@@ -8,6 +8,7 @@ library(yaml)
 library(purrr)
 
 source("R/utils.R")
+source("R/plots.R")
 
 #change for The scatter plots (If start = end the process will be a lot faster if only concerned with histograms and bar/pie charts)
 start <- 0;
@@ -40,11 +41,12 @@ df_sample <- tbl_df(df_smc) %>%
          tariff_area = 1, turbine_meter = "No", senior = "no") %>%
   group_by(cust_class)
 
-df_adjustable_sample <- tbl_df(data.frame (usage_month = 3, hhsize = 4, meter_size = '3/4"', usage_zone = 1, landscape_area = 2000,
+df_adjustable_sample <- tbl_df(data.frame (usage_month = 3,
+                                           hhsize = 4, meter_size = '3/4"', usage_zone = 1, landscape_area = 2000,
                                            et_amount = 2.0, wrap_customer = "No", irr_area = 2000, carw_customer = "No",
                                            season = "Winter", tax_exemption = "granted", lot_size_group = 3,
                                            temperature_zone = "Medium", pressure_zone = 1, water_font = "city_delivered",
-                                           area = "inside_city", water_type = "potable", rate_class = "C1",
+                                           city_limits = "inside_city", water_type = "potable", rate_class = "C1",
                                            dwelling_units = 10, elevation_zone = 2, greater_than = "False",
                                            usage_indoor_budget_ccf = .3, meter_type = "Turbine", block = 1,
                                            tariff_area = 1, turbine_meter = "No", senior = "no", cust_class = customer_classes[1]))
@@ -95,7 +97,7 @@ for(i in 1:nrow(df_OWRS))
   if(i==1){
     df_bill <- NULL
   }
-  
+  print(i)
   #Open OWRS file and retrieve important data
   owrs_file <- tryCatch({
     #Open OWRS file
@@ -167,65 +169,13 @@ df_final_bill <- df_final_bill %>% arrange(utility_name)
 
 #setwd("../../Documents/WaterRateTester/")
 
-NoBiMonthly <- nrow(df_final_bill %>% filter(bill_frequency == "bimonthly"))
-NoMonthly <- nrow(df_final_bill %>% filter(bill_frequency == "monthly"))
-NoOtherSchedule <- nrow(df_final_bill) - (NoBiMonthly + NoMonthly)
 
-if(NoOtherSchedule > 0)
-{
-  Schedule <- c("Monthly", "Bi-Monthly", "Other")
-  Schedule_DF <- data.frame(Schedule, c(NoMonthly, NoBiMonthly, NoOtherSchedule))
-  names(Schedule_DF) <- c("Bill_Frequency", "Value")
-} else {
-  Schedule <- c("2. Monthly", "1. Bi-Monthly")
-  Schedule_DF <- data.frame(Schedule, c(NoMonthly, NoBiMonthly))
-  names(Schedule_DF) <- c("Bill_Frequency", "Value")
-}
+billFrequencyPie <- plot_bill_frequency_piechart(df_final_bill)
 
+meanBillPie <- plot_mean_bill_pie(df_final_bill,10)
 
-billFrequencyPie <-ggplot(Schedule_DF, aes(x="1", y=Value, fill= Bill_Frequency)) +
-  geom_bar(width = 1, stat = "identity")+coord_polar("y", start=0) + scale_fill_brewer(palette="Blues") + theme_void() +
-  geom_text(aes(y = Value/2 + c(0, cumsum(Value)[-length(Value)]), label = percent(Value/nrow(df_final_bill))), size=5) +
-  ggtitle("Analysis of Bill Frequency")  + theme(plot.title = element_text(lineheight= .5, face="bold")) + labs(fill = "Bill Frequencies")
+rateTypePie <- plot_rate_type_pie(df_final_bill)
 
-
-meanBill <- round(mean(df_final_bill$bill[df_final_bill$usage_ccf == singleTargetValue]), 2)
-meanService <- round(mean(df_final_bill$service_charge[df_final_bill$usage_ccf == singleTargetValue]), 2)
-meanCommodity <- round(mean(df_final_bill$commodity_charge[df_final_bill$usage_ccf == singleTargetValue]), 2)
-meanOther <- round(meanBill - (meanService + meanCommodity), 2)
-
-Mean <- c( "3. Service Charge", "2. Commodity Charge", "1. Other Charge")
-Mean_DF <- data.frame(Mean, c(meanService, meanCommodity, meanOther))
-names(Mean_DF) <- c("Charge_Structure", "Value")
-
-meanBillPie <-ggplot(Mean_DF, aes(x= 1, y=Value, fill= Charge_Structure)) +
-  geom_bar(width = .5, stat = "identity") + scale_fill_brewer(palette="Greens") + theme_void() +
-  geom_text(aes(y = Value/2 + c(0, cumsum(Value)[-length(Value)]), label = printCurrency(Value))) +
-  ggtitle("Mean Bill by Parts", subtitle = paste("The total mean bill for ", singleTargetValue, " usage ccf is ", printCurrency(meanBill), "0", sep = ""))  +
-  labs(fill = "Charges") +
-  theme(plot.title = element_text(lineheight=.8, face="bold"), plot.subtitle = element_text(lineheight = .8))
-
-noTiered <- nrow(df_final_bill %>% filter(bill_type == "Tiered"))
-noBudget <- nrow(df_final_bill %>% filter(bill_type == "Budget"))
-noUniform <- nrow(df_final_bill %>% filter(bill_type == "Uniform"))
-noOtherBillType <- nrow(df_final_bill) - (noTiered + noBudget + noUniform)
-
-if(noOtherBillType > 0)
-{
-  Structure <- c( "Budget", "Tiered", "Uniform", "Other")
-  Structure_DF <- data.frame(Structure, c(noBudget, noTiered, noUniform, noOtherBillType))
-  names(Schedule_DF) <- c("Rate_Structure", "Value")
-} else {
-  Structure <- c( "3. Uniform", "2. Tiered", "1. Budget")
-  Structure_DF <- data.frame(Structure, c(noUniform, noTiered, noBudget))
-  names(Structure_DF) <- c("Rate_Structure", "Value")
-}
-
-
-rateStructurePie <-ggplot(Structure_DF, aes(x="", y=Value, fill= Rate_Structure)) +
-  geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_brewer(palette="Purples") + theme_void() +
-  geom_text(aes(x = "", y = Value/2 + c(0, cumsum(Value)[-length(Value)]), label = percent(Value/nrow(df_final_bill))), size=5) +
-  ggtitle("Analysis of Rate Structure")  + theme(plot.title = element_text(lineheight=.8, face="bold")) + labs(fill = "Rate Structures")
 
 meanpercentFixed <- round(mean(as.numeric(df_final_bill$percentFixed[df_final_bill$usage_ccf == singleTargetValue])), 3)
 
