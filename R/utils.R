@@ -21,7 +21,7 @@ standardize_OWRS_names <- function(owrs_file, current_class){
   return(owrs_file)
 }
 
-singleUtilitySim <- function(df_sample, df_OWRS, owrs_file, current_class){
+singleUtilitySim <- function(df_sample, df_OWRS_row, owrs_file, current_class){
 
   owrs_file <- standardize_OWRS_names(owrs_file, current_class)
   
@@ -38,8 +38,8 @@ singleUtilitySim <- function(df_sample, df_OWRS, owrs_file, current_class){
   }
   
   df_temp <- df_sample %>%
-    mutate(utility_id = df_OWRS[i,]$utility_id,
-           utility_name = df_OWRS[i,]$utility_name,
+    mutate(utility_id = df_OWRS_row$utility_id,
+           utility_name = df_OWRS_row$utility_name,
            bill_frequency = owrs_file$metadata$bill_frequency,
            unit_type = ut,
            bill_type = bt)
@@ -76,6 +76,76 @@ singleUtilitySim <- function(df_sample, df_OWRS, owrs_file, current_class){
   df_temp$percentFixed <- round(percentFixed, digits = 2)
   
   return(df_temp)
+}
+
+
+calculate_bills_for_all_utilities <- function(df_OWRS, df_sample, owrs_path, customer_classes){
+  #Declare Null Data Set
+  df_NA <- data.frame(
+    usage_ccf = NA,
+    #usage_month = NA,
+    #usage_year = NA,
+    cust_class = NA,
+    #usage_date = NA,
+    service_charge = NA,
+    commodity_charge = NA,
+    percentFixed = NA,
+    bill = NA
+  )
+  #End
+  
+  #Run through all the OWRS files and test if they are Readable and add the information to the data frame
+  
+  for(i in 1:nrow(df_OWRS))
+  {
+    if(i==1){
+      df_bill <- NULL
+    }
+    print(i)
+    #Open OWRS file and retrieve important data
+    owrs_file <- tryCatch({
+      #Open OWRS file
+      getFileData(owrs_path, df_OWRS[i,]$filepath)
+    },
+    error = function(cond){
+      #Display Error Message for specific files
+      message(paste("Format error in file:", df_OWRS[i,]$filepath, "\n", cond, "\n"))
+      return(NULL)
+    })
+    
+    
+    #If there is an error format the row data accordingly
+    if(!is.null(owrs_file))
+    {
+      for(j in 1:length(customer_classes))
+      {
+        current_class <- customer_classes[j]
+        
+        df_temp <- tryCatch({
+          singleUtilitySim(df_sample, df_OWRS[i,], owrs_file, current_class)
+        },
+        error = function(cond){
+          #Display Error Message for specific files
+          message(paste("Format error in file:", df_OWRS[i,]$filepath, "\n", cond, "\n"))
+          return(NULL)
+        }) 
+        
+        if(is.null(df_bill)){
+          df_bill <- df_temp
+        }else{
+          df_bill <- bind_rows(df_bill, df_temp)
+        }
+      }
+    }else{
+      # utility <- data.frame(utility_id = df_OWRS[i,]$utility_id, 
+      #                       utility_name = df_OWRS[i,]$filename, 
+      #                       bill_frequency = "NA")
+      # df_temp <- data.frame(utility, df_NA)
+      # df_bill <- rbind(df_bill, df_temp)
+    }
+  }
+  
+  df_bill
 }
 
 

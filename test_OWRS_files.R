@@ -71,73 +71,7 @@ df_OWRS <- tbl_df(as.data.frame(list("filepath"=getFileNames(owrs_path)), string
   mutate(utility_name = sapply(as.character(owrs_directory), extract_utility_name) )
 
 
-
-#Declare Null Data Set
-df_NA <- data.frame(
-  usage_ccf = NA,
-  #usage_month = NA,
-  #usage_year = NA,
-  cust_class = NA,
-  #usage_date = NA,
-  service_charge = NA,
-  commodity_charge = NA,
-  percentFixed = NA,
-  bill = NA
-)
-#End
-
-#Run through all the OWRS files and test if they are Readable and add the information to the data frame
-
-for(i in 1:nrow(df_OWRS))
-{
-  if(i==1){
-    df_bill <- NULL
-  }
-  print(i)
-  #Open OWRS file and retrieve important data
-  owrs_file <- tryCatch({
-    #Open OWRS file
-    getFileData(owrs_path, df_OWRS[i,]$filepath)
-  },
-  error = function(cond){
-    #Display Error Message for specific files
-    message(paste("Format error in file:", df_OWRS[i,]$filepath, "\n", cond, "\n"))
-    return(NULL)
-  })
-  
-  
-  #If there is an error format the row data accordingly
-  if(!is.null(owrs_file))
-  {
-    for(j in 1:length(customer_classes))
-    {
-      current_class <- customer_classes[j]
-  
-      df_temp <- tryCatch({
-        singleUtilitySim(df_sample, df_OWRS, owrs_file, current_class)
-      },
-      error = function(cond){
-        #Display Error Message for specific files
-        message(paste("Format error in file:", df_OWRS[i,]$filepath, "\n", cond, "\n"))
-        return(NULL)
-      }) 
-
-      if(is.null(df_bill)){
-        df_bill <- df_temp
-      }else{
-        df_bill <- bind_rows(df_bill, df_temp)
-      }
-    }
-  }else{
-    # utility <- data.frame(utility_id = df_OWRS[i,]$utility_id, 
-    #                       utility_name = df_OWRS[i,]$filename, 
-    #                       bill_frequency = "NA")
-    # df_temp <- data.frame(utility, df_NA)
-    # df_bill <- rbind(df_bill, df_temp)
-  }
-}
-#End
-
+df_bill <- calculate_bills_for_all_utilities(df_OWRS, df_sample, owrs_path, customer_classes)
 
 #Format the Bill Information so that only valid data entries are presented, the decimal points are rounded, and the data is arranged by utility
 df_final_bill <- tbl_df(df_bill) %>% filter(!is.na(bill)) %>%
