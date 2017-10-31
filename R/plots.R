@@ -38,9 +38,7 @@ plot_bill_frequency_piechart <- function(df){
 
 
 plot_mean_bill_pie <- function(df, demo_ccf){
-  filtered <- df %>% filter( (bill_frequency %in% c("monthly", "Monthly") & usage_ccf == demo_ccf) | 
-                               (bill_frequency %in% c("bimonthly", "Bimonthly", "Bi-Monthly") & usage_ccf == 2*demo_ccf) | 
-                               (bill_frequency %in% c("Quarterly") & usage_ccf == 3*demo_ccf)) %>%
+  filtered <- df %>% filter(usage_ccf == demo_ccf) %>%
     distinct(utility_name, .keep_all=TRUE)
   
   meanBill <- round(mean(filtered$bill), 2)
@@ -105,6 +103,65 @@ plot_rate_type_pie <- function(df){
 }
 
 
+plot_commodity_charges_vs_usage <- function(df, start, end, interval){
+  commodity_scatter <- ggplot(df, aes(x=usage_ccf, y=commodity_charge, color=utility_name)) +
+    #geom_point(shape=1) +
+    geom_line() +
+    labs(x = "Usage CCF", y = "Commodity Charge", color = "Utility") +
+    ggtitle("Commodity Charge Vs. Usage CCF", subtitle = paste("At every", interval, "CCF from", start, "to", end)) +
+    theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 25),
+          legend.position = "none")
+  
+  commodity_scatter
+}
+
+plot_bills_vs_usage <- function(df, start, end, interval){
+  bill_scatter <- ggplot(df_final_bill, aes(x=usage_ccf, y=bill, color=utility_name)) +
+    #geom_point(shape=1) +
+    geom_line()  +
+    labs(x = "Usage CCF", y = "Bill", color = "Utility") +
+    ggtitle("Total Bill Vs. Usage CCF", subtitle = paste("At every", interval, "CCF from", start, "to", end))+
+    theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 25),
+          legend.position = "none")
+  
+  bill_scatter
+}
+
+plot_ratio_histogram <- function(df, demo_ccf){
+  filtered <- df %>% filter(usage_ccf == demo_ccf) %>%
+    distinct(utility_name, .keep_all=TRUE)
+  
+  ratio_histogram <- ggplot(filtered, aes(x=percentFixed)) +
+    geom_histogram(binwidth=.05, colour="black", fill="white")+
+    labs(x = "Proportion of Total Bill", y = "Number of utilities in that range")+
+    ggtitle(paste("Ratio of Service Charge to Total Bill at", demo_ccf, "Usage CCF"))+
+    scale_y_continuous(expand = c(0,0))+
+    theme(axis.title.x = element_text(size = 15), axis.title.y = element_text(size = 15),
+          axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10),
+          title = element_text(size = 12)) +
+    geom_vline(xintercept = mean(filtered$percentFixed), color = "red")
+  
+  ratio_histogram
+}
+
+plot_bill_histogram <- function(df, demo_ccf){
+  filtered <- df %>% filter(usage_ccf == demo_ccf) %>%
+    distinct(utility_name, .keep_all=TRUE)
+  
+  bill_histogram <- ggplot(filtered, aes(x=bill)) +
+    geom_histogram(binwidth=(max(filtered$bill)- min(filtered$bill))/ round(length(filtered$bill)/6), colour="black", fill="white")+
+    labs(x = "Bill Amount ($)", y = "Number of Utilities in that Range")+
+    ggtitle(paste("Total Bill at", singleTargetValue, "Usage CCF"))+
+    scale_y_continuous(expand = c(0,0))+
+    #scale_x_continuous(breaks=seq(round(min(filtered$bill)), round(max(filtered$bill)), round((max(filtered$bill)- min(filtered$bill))/ (length(filtered$bill)/8), 0)))+
+    theme(axis.title.x = element_text(size = 15), axis.title.y = element_text(size = 15),
+          axis.text.x = element_text(size = 15), axis.text.y = element_text(size = 15),
+          title = element_text(size = 15)) +
+    geom_vline(xintercept = mean(filtered$bill), color = "red")
+  
+  
+  bill_histogram
+}
 
 
 

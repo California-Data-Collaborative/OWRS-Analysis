@@ -11,11 +11,6 @@ source("R/utils.R")
 source("R/plots.R")
 
 
-
-#The usage_ccf to evaluate for the histograms and bar chart
-singleTargetValue <- 15;
-
-
 #Declare the customer classes to be tested for each utility
 customer_classes <- c("RESIDENTIAL_SINGLE"
                       #"RESIDENTIAL_MULTI",
@@ -145,13 +140,14 @@ for(i in 1:nrow(df_OWRS))
 
 
 #Format the Bill Information so that only valid data entries are presented, the decimal points are rounded, and the data is arranged by utility
-df_final_bill <- tbl_df(df_bill) %>% filter(!is.na(bill))
-df_final_bill$bill <- round(as.numeric(df_final_bill$bill), 2)
-df_final_bill$commodity_charge <- round(as.numeric(df_final_bill$commodity_charge), 2)
-df_final_bill$service_charge <- round(df_final_bill$service_charge, 2)
-df_final_bill$utility_name <- as.character(df_final_bill$utility_name)
-df_final_bill$bill_frequency <- as.character(df_final_bill$bill_frequency)
-df_final_bill <- df_final_bill %>% arrange(utility_name)
+df_final_bill <- tbl_df(df_bill) %>% filter(!is.na(bill)) %>%
+  mutate(bill = round(as.numeric(bill), 2),
+         commodity_charge = round(as.numeric(commodity_charge), 2),
+         service_charge = round(service_charge, 2),
+         utility_name = as.character(utility_name),
+         bill_frequency = as.character(bill_frequency),
+         usage_ccf = ifelse(unit_type=="kgal", 1.33681*usage_ccf, usage_ccf)) %>% 
+  arrange(utility_name)
 #End
 
 #shape <- readOGR(dsn = "../Shapefiles", layer = "service_areas_cadc_with_utility_id")
@@ -168,50 +164,22 @@ df_final_bill <- df_final_bill %>% arrange(utility_name)
 #setwd("../../Documents/WaterRateTester/")
 
 
+#The usage_ccf to evaluate for the histograms and bar chart
+singleTargetValue <- 10;
+
 billFrequencyPie <- plot_bill_frequency_piechart(df_final_bill)
 
-meanBillPie <- plot_mean_bill_pie(df_final_bill,10)
+meanBillPie <- plot_mean_bill_pie(df_final_bill, singleTargetValue)
 
 rateTypePie <- plot_rate_type_pie(df_final_bill)
 
 
 meanpercentFixed <- round(mean(as.numeric(df_final_bill$percentFixed[df_final_bill$usage_ccf == singleTargetValue])), 3)
 
-commodity_scatter <- ggplot(df_final_bill, aes(x=usage_ccf, y=commodity_charge, color=utility_name)) +
-                            #geom_point(shape=1) +
-                            geom_line() +
-                            labs(x = "Usage CCF", y = "Commodity Charge", color = "Utility") +
-                            ggtitle("Commodity Charge Vs. Usage CCF", subtitle = paste("At every", interval, "CCF from", start, "to", end)) +
-                            theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 25),
-                                  legend.position = "none")
+commodity_scatter <- plot_commodity_charges_vs_usage(df_final_bill, start, end, interval)
 
-bill_scatter <- ggplot(df_final_bill, aes(x=usage_ccf, y=bill, color=utility_name)) +
-                            #geom_point(shape=1) +
-                            geom_line()  +
-                            labs(x = "Usage CCF", y = "Bill", color = "Utility") +
-                            ggtitle("Total Bill Vs. Usage CCF", subtitle = paste("At every", interval, "CCF from", start, "to", end))+
-                            theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 25),
-                            legend.position = "none")
+bill_scatter <- plot_bills_vs_usage(df_final_bill, start, end, interval)
 
-temp_df <- subset(df_final_bill, usage_ccf == singleTargetValue);
+ratio_histogram <- plot_ratio_histogram(df_final_bill, singleTargetValue)
 
-ratio_histogram <- ggplot(temp_df, aes(x=percentFixed)) +
-                   geom_histogram(binwidth=.05, colour="black", fill="white")+
-                   labs(x = "Percent of Total Bill", y = "Number of utilities in that range")+
-                   ggtitle(paste("Ratio of Service Charge to Total Bill at", singleTargetValue, "Usage CCF"))+
-                   scale_y_continuous(expand = c(0,0))+
-                   theme(axis.title.x = element_text(size = 15), axis.title.y = element_text(size = 15),
-                         axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10),
-                         title = element_text(size = 25)) +
-                   geom_vline(xintercept = mean(temp_df$percentFixed), color = "red")
-
-bill_histogram <- ggplot(temp_df, aes(x=bill)) +
-                          geom_histogram(binwidth=(max(temp_df$bill)- min(temp_df$bill))/ round(length(temp_df$bill)/6), colour="black", fill="white")+
-                          labs(x = "Bill Amount", y = "Number of Utilities in that Range")+
-                          ggtitle(paste("Total Bill at", singleTargetValue, "Usage CCF"))+
-                          scale_y_continuous(expand = c(0,0))+
-                          scale_x_continuous(breaks=seq(round(min(temp_df$bill)), round(max(temp_df$bill)), round((max(temp_df$bill)- min(temp_df$bill))/ (length(temp_df$bill)/8), 0)))+
-                          theme(axis.title.x = element_text(size = 15), axis.title.y = element_text(size = 15),
-                                axis.text.x = element_text(size = 15), axis.text.y = element_text(size = 15),
-                                title = element_text(size = 25)) +
-                          geom_vline(xintercept = mean(temp_df$bill), color = "red")
+bill_histogram <- plot_bill_histogram(df_final_bill, singleTargetValue)
