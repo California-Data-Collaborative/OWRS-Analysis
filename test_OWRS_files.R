@@ -10,10 +10,7 @@ library(purrr)
 source("R/utils.R")
 source("R/plots.R")
 
-#change for The scatter plots (If start = end the process will be a lot faster if only concerned with histograms and bar/pie charts)
-start <- 0;
-end <- 0;
-interval <- 5;
+
 
 #The usage_ccf to evaluate for the histograms and bar chart
 singleTargetValue <- 15;
@@ -41,9 +38,9 @@ df_sample <- tbl_df(df_smc) %>%
          tariff_area = 1, turbine_meter = "No", senior = "no") %>%
   group_by(cust_class)
 
-df_adjustable_sample <- tbl_df(data.frame (usage_month = 3,
+df_adjustable_sample <- tbl_df(data.frame (usage_month = 7, days_in_period = 30,
                                            hhsize = 4, meter_size = '3/4"', usage_zone = 1, landscape_area = 2000,
-                                           et_amount = 2.0, wrap_customer = "No", irr_area = 2000, carw_customer = "No",
+                                           et_amount = 7.0, wrap_customer = "No", irr_area = 2000, carw_customer = "No",
                                            season = "Winter", tax_exemption = "granted", lot_size_group = 3,
                                            temperature_zone = "Medium", pressure_zone = 1, water_font = "city_delivered",
                                            city_limits = "inside_city", water_type = "potable", rate_class = "C1",
@@ -51,6 +48,10 @@ df_adjustable_sample <- tbl_df(data.frame (usage_month = 3,
                                            usage_indoor_budget_ccf = .3, meter_type = "Turbine", block = 1,
                                            tariff_area = 1, turbine_meter = "No", senior = "no", cust_class = customer_classes[1]))
 
+#change for The scatter plots (If start = end the process will be a lot faster if only concerned with histograms and bar/pie charts)
+start <- 0;
+end <- 10;
+interval <- 5;
 df_usage <- as.data.frame(list("usage_ccf"=1:10, "cust_class"="RESIDENTIAL_SINGLE"))
 df_sample <-  left_join(df_usage, df_adjustable_sample, by="cust_class")
 
@@ -111,14 +112,7 @@ for(i in 1:nrow(df_OWRS))
   
   
   #If there is an error format the row data accordingly
-  if(is.null(owrs_file))
-  {
-    # utility <- data.frame(utility_id = df_OWRS[i,]$utility_id, 
-    #                       utility_name = df_OWRS[i,]$filename, 
-    #                       bill_frequency = "NA")
-    # df_temp <- data.frame(utility, df_NA)
-    # df_bill <- rbind(df_bill, df_temp)
-  } else
+  if(!is.null(owrs_file))
   {
     for(j in 1:length(customer_classes))
     {
@@ -139,6 +133,12 @@ for(i in 1:nrow(df_OWRS))
         df_bill <- bind_rows(df_bill, df_temp)
       }
     }
+  }else{
+    # utility <- data.frame(utility_id = df_OWRS[i,]$utility_id, 
+    #                       utility_name = df_OWRS[i,]$filename, 
+    #                       bill_frequency = "NA")
+    # df_temp <- data.frame(utility, df_NA)
+    # df_bill <- rbind(df_bill, df_temp)
   }
 }
 #End
@@ -146,13 +146,11 @@ for(i in 1:nrow(df_OWRS))
 
 #Format the Bill Information so that only valid data entries are presented, the decimal points are rounded, and the data is arranged by utility
 df_final_bill <- tbl_df(df_bill) %>% filter(!is.na(bill))
-
 df_final_bill$bill <- round(as.numeric(df_final_bill$bill), 2)
 df_final_bill$commodity_charge <- round(as.numeric(df_final_bill$commodity_charge), 2)
 df_final_bill$service_charge <- round(df_final_bill$service_charge, 2)
 df_final_bill$utility_name <- as.character(df_final_bill$utility_name)
 df_final_bill$bill_frequency <- as.character(df_final_bill$bill_frequency)
-
 df_final_bill <- df_final_bill %>% arrange(utility_name)
 #End
 

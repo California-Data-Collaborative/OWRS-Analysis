@@ -49,9 +49,8 @@ singleUtilitySim <- function(df_sample, df_OWRS, owrs_file, current_class){
   # double usage for bimonthly customers
   if(isBimonthly==TRUE){
     df_temp$usage_ccf <- 2*df_temp$usage_ccf
-    df_temp$days_in_period <- 61
-  }else{
-    df_temp$days_in_period <- 30
+    df_temp$days_in_period <- 2*df_temp$days_in_period
+    df_temp$et_amount <- 2*df_temp$et_amount
   }
   
   #cal bill and validate service charge and commodity charge
@@ -66,6 +65,7 @@ singleUtilitySim <- function(df_sample, df_OWRS, owrs_file, current_class){
   
   # divide bill by two for comparison to monthly customers 
   if(isBimonthly){
+    df_temp$usage_ccf <- df_temp$usage_ccf/2
     df_temp$service_charge <- df_temp$service_charge/2.0
     df_temp$commodity_charge <- df_temp$commodity_charge/2.0
     df_temp$bill <- df_temp$bill/2.0
