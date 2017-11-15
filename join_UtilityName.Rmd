@@ -1,0 +1,77 @@
+---
+title: "join_UtilityName"
+author: "Victor Sette Gripp"
+date: "November 9, 2017"
+output: html_notebook
+---
+
+```{r, echo=FALSE}
+library(dplyr)
+library(ggplot2)
+library(scales)
+library(RateParser)
+library(yaml)
+library(purrr)
+library(fuzzywuzzyR)
+library(stringdist)
+```
+
+```{r, echo=FALSE}
+
+# load useful functions and plot config
+source("R/utils.R")
+source("R/plots.R")
+
+#Retrieve the directories and files in the directores from the Open-Water-Specification-File directory
+owrs_path <- "../Open-Water-Rate-Specification/full_utility_rates/California";
+
+#load OWRS
+df_OWRS <- tbl_df(as.data.frame(list("filepath"=getFileNames(owrs_path)), stringsAsFactors=FALSE)) %>% 
+  
+  mutate(owrs_directory = map(filepath, strsplit, split="/") %>% map(c(1,1))) %>%
+  
+  mutate(filename = map(filepath, strsplit, split="/") %>% map(c(1,2))) %>%
+  
+  mutate(utility_id = map(owrs_directory, strsplit, split=" ") %>%  
+                      map(1) %>%map(tail, n=1) %>%
+                      map(gsub, pattern="\\D", replacement="") %>%
+                      map(as.numeric)) %>%
+  
+  mutate(effective_date = sapply(filename, extract_date) ) %>% 
+  mutate(utility_name = sapply(as.character(owrs_directory), extract_utility_name) )
+
+```
+
+
+```{r, echo=FALSE}
+#load supplier reports, geoinformation and pwsid_record
+supplier_reports <- read.csv('data/supplier_report.csv', stringsAsFactors=FALSE)
+supplier_geo <- read.csv('data/suppliers.csv', stringsAsFactors=FALSE)
+supplier_pwsid <- read.csv('data/utilities_for_OWRS.csv', stringsAsFactors = FALSE)
+
+# append to df_OWRS the best fuzzy match for utility_name to get pwsid
+# cutoff chosen arbitraily, other values can be tested
+# using fuzzywuzzy instead
+df_OWRS$fuzzy_match <- as.character(sapply(df_OWRS$utility_name, GetCloseMatches,
+                              sequence_strings = supplier_pwsid$Agency_Name, n=1L, cutoff = 0.85))
+
+# get pswid
+merged_OWRS <- merge(df_OWRS, supplier_pwsid, by.x = "fuzzy_match", by.y = "Agency_Name", all.x=TRUE, all.y=FALSE)
+```
+
+
+
+```{r, echo=FALSE}
+## Tentatively using the full pwsid list (6522 entries) and the stringdist library (other distance metrics) to match the ## utility names
+## Could be a good "second pass" for the ones not found by fuzzywuzy over the smaller pwsid list
+
+# supplier_pwsid <- read.csv('data/pwsid.csv', stringsAsFactors = FALSE)
+# idx_match <- amatch(toupper(df_OWRS$utility_name), supplier_pwsid$Water_System_Name, matchNA=FALSE, method='cosine', maxDist = 0.05)
+# 
+# df_OWRS$fuzzy_match <- supplier_pwsid[idx_match, "Water_System_Name"]
+# View(df_OWRS)
+```
+
+
+
+
