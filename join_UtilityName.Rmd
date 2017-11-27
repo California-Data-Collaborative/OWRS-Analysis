@@ -46,8 +46,10 @@ df_OWRS <- tbl_df(as.data.frame(list("filepath"=getFileNames(owrs_path)), string
 ```{r, echo=FALSE}
 #load supplier reports, geoinformation and pwsid_record
 supplier_reports <- read.csv('data/supplier_report.csv', stringsAsFactors=FALSE)
-supplier_geo <- read.csv('data/suppliers.csv', stringsAsFactors=FALSE)
+#supplier_geo <- read.csv('data/suppliers.csv', stringsAsFactors=FALSE)
 supplier_pwsid <- read.csv('data/utilities_for_OWRS.csv', stringsAsFactors = FALSE)
+
+
 
 # append to df_OWRS the best fuzzy match for utility_name to get pwsid
 # cutoff chosen arbitraily, other values can be tested
@@ -57,6 +59,8 @@ df_OWRS$fuzzy_match <- as.character(sapply(df_OWRS$utility_name, GetCloseMatches
 
 # get pswid
 merged_OWRS <- merge(df_OWRS, supplier_pwsid, by.x = "fuzzy_match", by.y = "Agency_Name", all.x=TRUE, all.y=FALSE)
+# merge with suplier report
+merged_OWRS <- merge(merged_OWRS, suplier_reports, by.x = "PWSID", by.y = "report_pwsid", all.x=TRUE, all.y=FALSE)
 ```
 
 
