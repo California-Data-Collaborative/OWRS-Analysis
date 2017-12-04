@@ -127,6 +127,18 @@ plot_bills_vs_usage <- function(df, start, end, interval){
   bill_scatter
 }
 
+boxplot_bills_vs_usage <- function(df, start, end, interval){
+  bill_box <- ggplot(df_final_bill, aes(x=usage_ccf, y=bill, group=usage_ccf)) +
+    geom_boxplot()  +
+    scale_x_discrete(name = "Usage (CCF)") +
+    scale_y_continuous(name = "Total Bill (Dollars)")+
+    ggtitle("Total Bill Vs. Usage CCF", subtitle = paste("At every", interval, "CCF from", start, "to", end))+
+    theme(axis.text.x = element_text(size = 14), axis.text.y = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 25),
+          legend.position = "none")
+  
+  bill_box
+}
+
 plot_ratio_histogram <- function(df, demo_ccf){
   filtered <- df %>% filter(usage_ccf == demo_ccf) %>%
     distinct(utility_name, .keep_all=TRUE)
