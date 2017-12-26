@@ -1,173 +1,169 @@
----
-title: "OWRS Analysis"
-output:
-  html_document:
-    keep_md: true
----
+# OWRS Analysis
 
-```{r, echo=FALSE}
-library(dplyr)
-library(ggplot2)
-library(scales)
-library(raster)
-library(RateParser)
-library(yaml)
-library(purrr)
-library(fuzzywuzzyR)
-library(lubridate)
+
+```
+## 
+## Attaching package: 'dplyr'
+```
+
+```
+## The following objects are masked from 'package:stats':
+## 
+##     filter, lag
+```
+
+```
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+```
+
+```
+## Loading required package: sp
+```
+
+```
+## 
+## Attaching package: 'raster'
+```
+
+```
+## The following object is masked from 'package:dplyr':
+## 
+##     select
+```
+
+```
+## 
+## Attaching package: 'purrr'
+```
+
+```
+## The following object is masked from 'package:scales':
+## 
+##     discard
+```
+
+```
+## 
+## Attaching package: 'lubridate'
+```
+
+```
+## The following object is masked from 'package:base':
+## 
+##     date
 ```
 
 
-```{r, echo=FALSE}
-source("R/utils.R")
-source("R/plots.R")
 
-
-#Declare the customer classes to be tested for each utility
-customer_classes <- c("RESIDENTIAL_SINGLE"
-                      #"RESIDENTIAL_MULTI",
-                      #"COMMERCIAL"
-)
-#End
-
-#import sample data and give the data parameters used in the owrs files that are not in the original data
-df_smc <- santamonica
-names(df_smc) <- c( "cust_id", "usage_ccf", "usage_month", "usage_year",  "cust_class", "usage_date", "cust_class_from-utility")
-
-df_sample <- tbl_df(df_smc) %>%
-  mutate(hhsize = 4, meter_size = '3/4"', usage_zone = 1, landscape_area = 2000,
-         et_amount = 2.0, wrap_customer = "No", irr_area = 2000, carw_customer = "No",
-         season = "Winter", tax_exemption = "granted", lot_size_group = 3,
-         temperature_zone = "Medium", pressure_zone = 1, water_font = "city_delivered",
-         area = "inside_city", water_type = "potable", rate_class = "C1",
-         dwelling_units = 10, elevation_zone = 2, greater_than = "False",
-         usage_indoor_budget_ccf = .3, meter_type = "compound", block = 1,
-         tariff_area = 1, turbine_meter = "No", senior = "no") %>%
-  group_by(cust_class)
-
-df_adjustable_sample <- tbl_df(data.frame (usage_month = 7, days_in_period = 30,
-                                           hhsize = 4, meter_size = '3/4"', usage_zone = 1, landscape_area = 2000,
-                                           et_amount = 7.0, wrap_customer = "No", irr_area = 2000, 
-                                           carw_customer = "No", season = "Winter", tax_exemption = "granted", 
-                                           lot_size_group = 3, temperature_zone = "Medium", pressure_zone = 1, 
-                                           water_font = "city_delivered", city_limits = "inside_city", 
-                                           water_type = "potable", rate_class = "C1", dwelling_units = 10, 
-                                           elevation_zone = 2, greater_than = "False", usage_indoor_budget_ccf = .3, 
-                                           meter_type = "Turbine", block = 1, tariff_area = 1, turbine_meter = "No",
-                                           senior = "no", cust_class = customer_classes[1]))
-
-#change for The scatter plots (If start = end the process will be a lot faster if only concerned with histograms and bar/pie charts)
-start <- 0;
-end <- 50;
-interval <- 5;
-df_usage <- as.data.frame(list("usage_ccf"=1:10, "cust_class"="RESIDENTIAL_SINGLE"))
-df_sample <-  left_join(df_usage, df_adjustable_sample, by="cust_class")
-
-
-
-#Retrieve the directories and files in the directores from the Open-Water-Specification-File directory
-owrs_path <- "../Open-Water-Rate-Specification/full_utility_rates/California";
-
-#TODO insert the filename gathering functioon here
-df_OWRS <- tbl_df(as.data.frame(list("filepath"=getFileNames(owrs_path)), stringsAsFactors=FALSE)) %>% 
-  
-  mutate(owrs_directory = map(filepath, strsplit, split="/") %>% map(c(1,1))) %>%
-  
-  mutate(filename = map(filepath, strsplit, split="/") %>% map(c(1,2))) %>%
-  
-  mutate(utility_id = map(owrs_directory, strsplit, split=" ") %>%  
-                      map(1) %>%map(tail, n=1) %>%
-                      map(gsub, pattern="\\D", replacement="") %>%
-                      map(as.numeric)) %>%
-  
-  mutate(effective_date = sapply(filename, extract_date) ) %>% 
-  mutate(utility_name = sapply(as.character(owrs_directory), extract_utility_name) )
-
-
-df_bill <- calculate_bills_for_all_utilities(df_OWRS, df_sample, owrs_path, customer_classes)
-
-#list of utilities for which the 3/4" key was not found to calculate the rates
-#identified from the errors thrown when running this chunk of code.
-meter_size_58 <- c('Goleta Water District',
-                   'Humboldt Bay Municipal Water District', 
-                   'Mid-Peninsula Water District', 
-                   'North Marin Water District')
-
-df_sample$meter_size <- '5/8"'
-
-df_bill <- rbind(df_bill,
-                 calculate_bills_for_all_utilities(df_OWRS[df_OWRS$utility_name %in% meter_size_58,], 
-                                                   df_sample, owrs_path, customer_classes))
-#same process for the utilities where the smallest meter size is 1 inch.
-meter_size_1in <- c('Humboldt Community Services District')
-
-df_sample$meter_size <- '1"'
-
-df_bill <- rbind(df_bill,
-                 calculate_bills_for_all_utilities(df_OWRS[df_OWRS$utility_name %in% meter_size_1in,], 
-                                                   df_sample, owrs_path, customer_classes))
-
-#Format the Bill Information so that only valid data entries are presented, the decimal points are rounded, and the data is arranged by utility
-df_final_bill <- tbl_df(df_bill) %>% filter(!is.na(bill)) %>%
-  mutate(bill = round(as.numeric(bill), 2),
-         commodity_charge = round(as.numeric(commodity_charge), 2),
-         service_charge = round(service_charge, 2),
-         utility_name = as.character(utility_name),
-         bill_frequency = as.character(bill_frequency),
-         usage_ccf = ifelse(unit_type=="kgal", 1.33681*usage_ccf, usage_ccf)) %>% 
-  arrange(utility_name)
-#End
-
-#getting rid of the annually charged bills until we fix the bill calculator
-df_final_bill <- df_final_bill[which(df_final_bill$bill_frequency != "Annually"),]
+```
+## [1] 81
 ```
 
-```{r, echo=FALSE}
-#library(rgdal)
-
-#shape <- readOGR(dsn = "../Shapefiles", layer = "service_areas_cadc_with_utility_id")
-#shape <- merge(shape, df_final_bill, by = "utility_id")
-
-#setwd("../../Dropbox/CSV/")
-#Output The Final Bill information to a  shapefile
-#writeOGR(shape, ".", "service_areas_cadc_with_billing_info", driver="ESRI Shapefile", overwrite_layer = TRUE)
-#End
-#zipDemFiles <- list.files(recursive = TRUE)
-#setwd("../")
-#zip(zipfile = "../Dropbox/CSV/shapefileZip", files = paste("TempShapeFiles", zipDemFiles, sep = "/"))
-
-#setwd("../../Documents/WaterRateTester/")
+```
+## Format error in file: Goleta Water District - 1215/04-01-2017.owrs 
+##  Error in value[[3L]](cond): The following map keys are missing from the OWRS file: (3/4")
+## 
 ```
 
-```{r}
+```
+## [1] 85
+```
+
+```
+## Format error in file: Humboldt Bay Municipal Water District - 1370/07-01-2017.owrs 
+##  Error in value[[3L]](cond): The following map keys are missing from the OWRS file: (3/4")
+## 
+```
+
+```
+## [1] 86
+```
+
+```
+## Format error in file: Humboldt Community Services District - 1371/08-01-2017.owrs 
+##  Error in value[[3L]](cond): The following map keys are missing from the OWRS file: (3/4")
+## 
+```
+
+```
+## [1] 110
+```
+
+```
+## Format error in file: Mid-Peninsula Water District - 1827/07-01-2017.owrs 
+##  Error in value[[3L]](cond): The following map keys are missing from the OWRS file: (3/4")
+## 
+```
+
+```
+## [1] 118
+```
+
+```
+## Format error in file: North Marin Water District - 1996/06-01-2017.owrs 
+##  Error in value[[3L]](cond): The following map keys are missing from the OWRS file: (3/4")
+## 
+```
+
+```
+## [1] 179
+```
+
+```
+## Format error in file: Western Municipal Water District - 3150/01-01-2018.owrs 
+##  Error in value[[3L]](cond): argument is of length zero
+## 
+```
+
+
+
+
+```r
 #The usage_ccf to evaluate for the histograms and bar chart
 singleTargetValue <- 10;
 ```
 
-```{r}
+
+```r
 plot_bill_frequency_piechart(df_final_bill)
 ```
 
-```{r}
+![](owrs_analysis_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+
+
+```r
 plot_mean_bill_pie(df_final_bill, singleTargetValue)
 ```
 
+![](owrs_analysis_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
 
 
-```{r}
+
+
+```r
 plot_rate_type_pie(df_final_bill)
 ```
 
-```{r}
+![](owrs_analysis_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+
+
+```r
 plot_commodity_charges_vs_usage(df_final_bill, start, end, interval)
 ```
 
-```{r}
+![](owrs_analysis_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+
+
+```r
 plot_bills_vs_usage(df_final_bill, start, end, interval)
 ```
 
-```{r}
+![](owrs_analysis_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
 
+
+```r
 # png(filename='plots/boxplot_bills.png',  width = 700, height = 432, units = "px")
 # plot(boxplot_bills_vs_usage(df_final_bill, start, end, interval))
 # dev.off()
@@ -175,21 +171,30 @@ plot_bills_vs_usage(df_final_bill, start, end, interval)
 boxplot_bills_vs_usage(df_final_bill, start, end, interval)
 ```
 
+![](owrs_analysis_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+
 
 meanpercentFixed <- round(mean(as.numeric(df_final_bill$percentFixed[df_final_bill$usage_ccf == singleTargetValue])), 3)
 
 
-```{r}
+
+```r
 plot_ratio_histogram(df_final_bill, singleTargetValue)
 ```
 
-```{r}
+![](owrs_analysis_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+
+
+```r
 plot_bill_histogram(df_final_bill, singleTargetValue)
 ```
 
+![](owrs_analysis_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+
 # Rates x Efficiency
 ## Define Period of Analysis
-```{r}
+
+```r
 startmonth <- 1
 startyear <- 2017
 endmonth <- 12
@@ -200,7 +205,8 @@ enddate <- as.Date(paste('01', as.character(endmonth), as.character(endyear)), "
 reference_period <- seq.Date(startdate, enddate, by="month")
 ```
 ## Calculate Rates
-```{r}
+
+```r
 # Rates time series
 
 df_usage <- as.data.frame(list("usage_ccf"=15, "cust_class"="RESIDENTIAL_SINGLE"))
@@ -222,7 +228,69 @@ df_adjustable_sample <- tbl_df(data.frame (reference_date = reference_period,
 df_sample <-  left_join(df_usage, df_adjustable_sample, by="cust_class")
 
 df_bill <- calculate_bills_for_all_utilities(df_OWRS, df_sample, owrs_path, customer_classes)
+```
 
+```
+## [1] 81
+```
+
+```
+## Format error in file: Goleta Water District - 1215/04-01-2017.owrs 
+##  Error in value[[3L]](cond): The following map keys are missing from the OWRS file: (3/4")
+## 
+```
+
+```
+## [1] 85
+```
+
+```
+## Format error in file: Humboldt Bay Municipal Water District - 1370/07-01-2017.owrs 
+##  Error in value[[3L]](cond): The following map keys are missing from the OWRS file: (3/4")
+## 
+```
+
+```
+## [1] 86
+```
+
+```
+## Format error in file: Humboldt Community Services District - 1371/08-01-2017.owrs 
+##  Error in value[[3L]](cond): The following map keys are missing from the OWRS file: (3/4")
+## 
+```
+
+```
+## [1] 110
+```
+
+```
+## Format error in file: Mid-Peninsula Water District - 1827/07-01-2017.owrs 
+##  Error in value[[3L]](cond): The following map keys are missing from the OWRS file: (3/4")
+## 
+```
+
+```
+## [1] 118
+```
+
+```
+## Format error in file: North Marin Water District - 1996/06-01-2017.owrs 
+##  Error in value[[3L]](cond): The following map keys are missing from the OWRS file: (3/4")
+## 
+```
+
+```
+## [1] 179
+```
+
+```
+## Format error in file: Western Municipal Water District - 3150/01-01-2018.owrs 
+##  Error in value[[3L]](cond): argument is of length zero
+## 
+```
+
+```r
 #list of utilities for which the 3/4" key was not found to calculate the rates
 #identified from the errors thrown when running this chunk of code.
 meter_size_58 <- c('Goleta Water District',
@@ -261,14 +329,22 @@ df_final_bill <- tbl_df(df_bill) %>% filter(!is.na(bill)) %>%
 df_final_bill <- df_final_bill[which(df_final_bill$bill_frequency != "Annually"),]
 ```
 Average water rates history:
-```{r}
+
+```r
 plot_avg_price_history(df_final_bill)
 ```
+
+```
+## Warning: Removed 60 rows containing non-finite values (stat_boxplot).
+```
+
+![](owrs_analysis_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
 
 
 ## Calculate Efficiency
 Load suppliers report info and join with the Utilities list from the OWRS files
-```{r}
+
+```r
 #load supplier reports, geoinformation and pwsid_record
 supplier_reports <- read.csv('data/supplier_report.csv', stringsAsFactors=FALSE)
 #supplier_geo <- read.csv('data/suppliers.csv', stringsAsFactors=FALSE)
@@ -287,7 +363,8 @@ merged_OWRS <- merge(df_OWRS, supplier_pwsid, by.x = "fuzzy_match", by.y = "Agen
 merged_OWRS <- merge(merged_OWRS, supplier_reports, by.x = "PWSID", by.y = "report_pwsid", all.x=TRUE, all.y=FALSE)
 ```
 Calculate Efficiency from the suppliers reports
-```{r}
+
+```r
 #The standard value for GPCD is assumed 55
 target_gpcd <- 55
 ET_adj_factor <- 0.8
@@ -304,16 +381,30 @@ merged_OWRS$report_monthyear <- as.Date(paste('01', as.character(merged_OWRS$rep
                                               as.character(merged_OWRS$report_year)), "%d %m %Y")
 ```
 
-```{r}
-plot_efficiency_ts(merged_OWRS)
 
+```r
+plot_efficiency_ts(merged_OWRS)
 ```
 
-```{r}
+```
+## Warning: Removed 39 rows containing non-finite values (stat_boxplot).
+```
+
+![](owrs_analysis_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
+
+
+```r
 plot_gpcd_ts(merged_OWRS)
 ```
+
+```
+## Warning: Removed 39 rows containing non-finite values (stat_boxplot).
+```
+
+![](owrs_analysis_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
 ## Compare Rates and efficiency
-```{r}
+
+```r
 df_final_bill$fuzzy_match <- as.character(sapply(df_final_bill$utility_name, GetCloseMatches,
                               sequence_strings = supplier_pwsid$Agency_Name, n=1L, cutoff = 0.85))
 
@@ -328,7 +419,8 @@ eff_vs_rate <- merge(df_final_bill, merged_OWRS,
 ```
 
 Scatter plot of Efficiency (pct_above_target) vs Rates (Total Bill for 15 CCF)
-```{r}
+
+```r
 agg_eff_vs_rate <- eff_vs_rate[c("PWSID", "usage_month", "usage_year",
                                  "bill", "pct_above_target")] %>% na.omit() %>%
                         group_by(PWSID) %>% summarise_all(funs(mean))
@@ -336,13 +428,17 @@ agg_eff_vs_rate <- eff_vs_rate[c("PWSID", "usage_month", "usage_year",
 plot_eff_vs_bill(agg_eff_vs_rate)
 ```
 
-Scatter plot of Efficiency vs Rates Structure (% Fixed  - for 15 CCF)
-```{r}
+![](owrs_analysis_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
 
+Scatter plot of Efficiency vs Rates Structure (% Fixed  - for 15 CCF)
+
+```r
 agg_eff_vs_rate <- eff_vs_rate[c("PWSID", "usage_month", "usage_year",
                                  "pct_above_target", "percentFixed")] %>% na.omit() %>%
                         group_by(PWSID) %>% summarise_all(funs(mean))
 
 plot_eff_vs_pctFixed(agg_eff_vs_rate)
 ```
+
+![](owrs_analysis_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
 
