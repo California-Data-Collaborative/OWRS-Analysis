@@ -1,6 +1,9 @@
 ---
 title: "OWRS Analysis"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
+  html_notebook: null
 ---
 
 ```{r, echo=FALSE}
