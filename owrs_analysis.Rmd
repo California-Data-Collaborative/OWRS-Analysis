@@ -2,8 +2,7 @@
 title: "OWRS Analysis"
 output:
   html_document:
-    df_print: paged
-  html_notebook: null
+    keep_md: true
 ---
 
 ```{r, echo=FALSE}
