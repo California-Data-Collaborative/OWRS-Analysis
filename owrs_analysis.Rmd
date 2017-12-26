@@ -84,6 +84,27 @@ df_OWRS <- tbl_df(as.data.frame(list("filepath"=getFileNames(owrs_path)), string
 
 df_bill <- calculate_bills_for_all_utilities(df_OWRS, df_sample, owrs_path, customer_classes)
 
+#list of utilities for which the 3/4" key was not found to calculate the rates
+#identified from the errors thrown when running this chunk of code.
+meter_size_58 <- c('Goleta Water District',
+                   'Humboldt Bay Municipal Water District', 
+                   'Mid-Peninsula Water District', 
+                   'North Marin Water District')
+
+df_sample$meter_size <- '5/8"'
+
+df_bill <- rbind(df_bill,
+                 calculate_bills_for_all_utilities(df_OWRS[df_OWRS$utility_name %in% meter_size_58,], 
+                                                   df_sample, owrs_path, customer_classes))
+#same process for the utilities where the smallest meter size is 1 inch.
+meter_size_1in <- c('Humboldt Community Services District')
+
+df_sample$meter_size <- '1"'
+
+df_bill <- rbind(df_bill,
+                 calculate_bills_for_all_utilities(df_OWRS[df_OWRS$utility_name %in% meter_size_1in,], 
+                                                   df_sample, owrs_path, customer_classes))
+
 #Format the Bill Information so that only valid data entries are presented, the decimal points are rounded, and the data is arranged by utility
 df_final_bill <- tbl_df(df_bill) %>% filter(!is.na(bill)) %>%
   mutate(bill = round(as.numeric(bill), 2),
@@ -94,6 +115,9 @@ df_final_bill <- tbl_df(df_bill) %>% filter(!is.na(bill)) %>%
          usage_ccf = ifelse(unit_type=="kgal", 1.33681*usage_ccf, usage_ccf)) %>% 
   arrange(utility_name)
 #End
+
+#getting rid of the annually charged bills until we fix the bill calculator
+df_final_bill <- df_final_bill[which(df_final_bill$bill_frequency != "Annually"),]
 ```
 
 ```{r}
@@ -142,9 +166,9 @@ plot_bills_vs_usage(df_final_bill, start, end, interval)
 
 ```{r}
 
-png(filename='plots/boxplot_bills.png',  width = 700, height = 432, units = "px")
-plot(boxplot_bills_vs_usage(df_final_bill, start, end, interval))
-dev.off()
+# png(filename='plots/boxplot_bills.png',  width = 700, height = 432, units = "px")
+# plot(boxplot_bills_vs_usage(df_final_bill, start, end, interval))
+# dev.off()
 
 boxplot_bills_vs_usage(df_final_bill, start, end, interval)
 ```
@@ -197,6 +221,29 @@ df_sample <-  left_join(df_usage, df_adjustable_sample, by="cust_class")
 
 df_bill <- calculate_bills_for_all_utilities(df_OWRS, df_sample, owrs_path, customer_classes)
 
+#list of utilities for which the 3/4" key was not found to calculate the rates
+#identified from the errors thrown when running this chunk of code.
+meter_size_58 <- c('Goleta Water District',
+                   'Humboldt Bay Municipal Water District', 
+                   'Mid-Peninsula Water District', 
+                   'North Marin Water District')
+
+df_sample$meter_size <- '5/8"'
+
+df_bill <- rbind(df_bill,
+                 calculate_bills_for_all_utilities(df_OWRS[df_OWRS$utility_name %in% meter_size_58,], 
+                                                   df_sample, owrs_path, customer_classes))
+#same process for the utilities where the smallest meter size is 1 inch.
+meter_size_1in <- c('Humboldt Community Services District')
+
+df_sample$meter_size <- '1"'
+
+df_bill <- rbind(df_bill,
+                 calculate_bills_for_all_utilities(df_OWRS[df_OWRS$utility_name %in% meter_size_1in,], 
+                                                   df_sample, owrs_path, customer_classes))
+
+#Format the Bill Information so that only valid data entries are presented, 
+#the decimal points are rounded, and the data is arranged by utility
 df_final_bill <- tbl_df(df_bill) %>% filter(!is.na(bill)) %>%
   mutate(bill = round(as.numeric(bill), 2),
          commodity_charge = round(as.numeric(commodity_charge), 2),
@@ -208,24 +255,12 @@ df_final_bill <- tbl_df(df_bill) %>% filter(!is.na(bill)) %>%
   filter(effective_date == max(effective_date)) %>%
   arrange(utility_name)
 
+#getting rid of the annually charged bills until we fix the bill calculator
+df_final_bill <- df_final_bill[which(df_final_bill$bill_frequency != "Annually"),]
 ```
-Example plot of rates time series:
+Average water rates history:
 ```{r}
-bill_scatter <- ggplot(df_final_bill,
-                       #%>% filter(utility_name == "San Francisco Public Utilities Commission"),
-                       aes(x=as.Date(reference_date), y=bill, color=utility_name)) +
-    #geom_point(shape=1) +
-    geom_line()  +
-    labs(x = "report reference date", y = "Total Bill (Dollars)", color = "Utility") +
-    ggtitle("Total Bill each month for 15 CCF")+
-    theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 25),
-          legend.position = "none")
-
-png(filename='plots/bill_scatter.png',  width = 700, height = 432, units = "px")
-plot(bill_scatter)
-dev.off()
-
-plot(bill_scatter)
+plot_avg_price_history(df_final_bill)
 ```
 
 
@@ -254,52 +289,26 @@ Calculate Efficiency from the suppliers reports
 #The standard value for GPCD is assumed 55
 target_gpcd <- 55
 ET_adj_factor <- 0.8
+unit_conversion <- 0.62
 
 merged_OWRS$production_target <- 55 * merged_OWRS$report_population * merged_OWRS$report_days_in_month +
-  merged_OWRS$report_irr_area_sf * merged_OWRS$report_eto * ET_adj_factor
+  merged_OWRS$report_irr_area_sf * merged_OWRS$report_eto * ET_adj_factor * unit_conversion
 
 merged_OWRS$residential_use <- merged_OWRS$report_production_calculated * merged_OWRS$report_percent_residential
 
 merged_OWRS$pct_above_target <- (merged_OWRS$residential_use / merged_OWRS$production_target) - 1
+
+merged_OWRS$report_monthyear <- as.Date(paste('01', as.character(merged_OWRS$report_month),
+                                              as.character(merged_OWRS$report_year)), "%d %m %Y")
 ```
 
 ```{r}
-eff_ts <- ggplot(merged_OWRS, 
-                  #%>% filter(PWSID == "CA0110005"), 
-                  aes(x=as.Date(report_date), y=pct_above_target, color=utility_name)) +
-    #geom_point(shape=1) +
-    geom_line()  +
-    labs(x = "report_date", y = "Percentage above target", color = "Utility") +
-    ggtitle("Efficiency Time Series")+
-    theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 25),
-          legend.position = "none")
-
-png(filename='plots/eff_ts.png',  width = 700, height = 432, units = "px")
-plot(eff_ts)
-dev.off()
-
-eff_ts
+plot_efficiency_ts(merged_OWRS)
 
 ```
 
-
-Plot GPCD (time series) Residential for each agency
 ```{r}
-gpcd_ts <- ggplot(merged_OWRS, 
-                  #%>% filter(PWSID == "CA0110005"), 
-                  aes(x=as.Date(report_date), y=report_gpcd_calculated, color=utility_name)) +
-    #geom_point(shape=1) +
-    geom_line()  +
-    labs(x = "report_date", y = "Residential GPCD (calculated)", color = "Utility") +
-    ggtitle("GPCD Time Series")+
-    theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 25),
-          legend.position = "none")
-
-png(filename='plots/gpcd_ts.png',  width = 700, height = 432, units = "px")
-plot(gpcd_ts)
-dev.off()
-
-gpcd_ts
+plot_gpcd_ts(merged_OWRS)
 ```
 ## Compare Rates and efficiency
 ```{r}
@@ -310,8 +319,6 @@ df_final_bill <- merge(df_final_bill, supplier_pwsid, by.x = "fuzzy_match", by.y
 
 
 #merge on PWSID, month and Year
-#df_final_bill$reference_month <- month(df_final_bill$reference_date)
-#df_final_bill$reference_year <- year(df_final_bill$reference_date)
 eff_vs_rate <- merge(df_final_bill, merged_OWRS, 
                      by.x = c("PWSID", "usage_month", "usage_year"),
                      by.y = c("PWSID", "report_month", "report_year"),
@@ -320,39 +327,20 @@ eff_vs_rate <- merge(df_final_bill, merged_OWRS,
 
 Scatter plot of Efficiency (pct_above_target) vs Rates (Total Bill for 15 CCF)
 ```{r}
-eff_vs_bill <- ggplot(eff_vs_rate, 
-                  #%>% filter(PWSID == "CA0110005"), 
-                  aes(x=bill, y=pct_above_target, color=PWSID )) +
-    geom_point(shape=1) +
-    #geom_line()  +
-    labs(x = "Total Bill (Dollars)", y = "Percentage Above Target", color="Utility") +
-    ggtitle("Efficiency vs Total bill")+
-    theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 25),
-          legend.position = "none")
+agg_eff_vs_rate <- eff_vs_rate[c("PWSID", "usage_month", "usage_year",
+                                 "bill", "pct_above_target")] %>% na.omit() %>%
+                        group_by(PWSID) %>% summarise_all(funs(mean))
 
-png(filename='plots/eff_vs_bill.png',  width = 700, height = 432, units = "px")
-plot(eff_vs_bill)
-dev.off()
-
-eff_vs_bill
+plot_eff_vs_bill(agg_eff_vs_rate)
 ```
 
 Scatter plot of Efficiency vs Rates Structure (% Fixed  - for 15 CCF)
 ```{r}
-eff_vs_pctFixed <- ggplot(eff_vs_rate, 
-                  #%>% filter(PWSID == "CA0110005"), 
-                  aes(x=percentFixed, y=pct_above_target, color=PWSID)) +
-    geom_point(shape=1) +
-    #geom_line()  +
-    labs(x = "Percent of Service charge", y = "Percent above target", color = "Utility") +
-    ggtitle("Efficiency vs Percent Fixed")+
-    theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 25),
-          legend.position = "none")
 
-png(filename='plots/eff_vs_pctFixed.png',  width = 700, height = 432, units = "px")
-plot(eff_vs_pctFixed)
-dev.off()
+agg_eff_vs_rate <- eff_vs_rate[c("PWSID", "usage_month", "usage_year",
+                                 "pct_above_target", "percentFixed")] %>% na.omit() %>%
+                        group_by(PWSID) %>% summarise_all(funs(mean))
 
-eff_vs_pctFixed
+plot_eff_vs_pctFixed(agg_eff_vs_rate)
 ```
 

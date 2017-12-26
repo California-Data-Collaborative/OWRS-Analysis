@@ -43,7 +43,7 @@ singleUtilitySim <- function(df_sample, df_OWRS_row, owrs_file, current_class){
            effective_date = df_OWRS_row$effective_date,
            bill_frequency = owrs_file$metadata$bill_frequency,
            unit_type = ut,
-           bill_type = bt)
+           bill_type = as.character(bt))
   
   isBimonthly <- length(grep("[Bb][Ii]", df_temp$bill_frequency[1]))
   
