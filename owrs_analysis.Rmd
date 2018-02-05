@@ -5,7 +5,7 @@ output:
     keep_md: true
 ---
 
-```{r, echo=FALSE, warning=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 library(dplyr)
 library(ggplot2)
 library(scales)
@@ -15,16 +15,32 @@ library(yaml)
 library(purrr)
 library(fuzzywuzzyR)
 library(lubridate)
+library(captioner)
 ```
 
-## Introduction
+# Introduction
 
-Background on the survey...
+The [California Data Collaborative ("CaDC")](http://californiadatacollaborative.org/) is a coalition of water utilities that have pioneered a new data infrastructure non-profit 501 (c) (3) to support water managers in meeting their reliability objectives and serve the public good.
 
+One important contribution of the CaDC was to establish a standard format and to provide the infrastructure for storage and maintainance of an open database for water rates, facilitating the work of analysts, economists and software developers interested in analyzing and understanding the differences in water rate structures and prices across many different agencies and locations. The water rate structures were organized in [Open-Water-Rate-Specification (OWRS)](https://github.com/California-Data-Collaborative/Open-Water-Rate-Specification) files, a format based on [YAML](http://yaml.org/), which is designed to be easy to store, transmit, and parse in any programming language while also being easy for humans to read.
 
-```{r, echo=FALSE}
+This report presents a summary of the types of analyses and insights that can be obtained from analyzing the OWRS, especially when this information is combined with the water consumption data from water agencies and Census Data.
+
+# Data
+
+This report provides the combined analysis of data from 4 different sources:
+
+* Water Rates from the [Open-Water-Rates-Specification](https://github.com/California-Data-Collaborative/Open-Water-Rate-Specification).
+* Water Consumption data reported by the water agencies [ADD MORE DETAIL] 
+* Demographic Data from the American Community Survey [??]
+* Qualitative Data from a Survey realized by the California Data Collaborative with water agencies in 2017. 
+
+```{r, include=FALSE}
 source("R/utils.R")
 source("R/plots.R")
+
+#starting function to create Figure captions
+fig_nums <- captioner(prefix = "Figure")
 
 
 #Declare the customer classes to be tested for each utility
@@ -49,10 +65,10 @@ df_sample <- tbl_df(df_smc) %>%
          tariff_area = 1, turbine_meter = "No", senior = "no") %>%
   group_by(cust_class)
 
-df_adjustable_sample <- tbl_df(data.frame (usage_month = 7, days_in_period = 30, usage_year=2017,
+df_adjustable_sample <- tbl_df(data.frame (usage_month = 7, days_in_period = 31, usage_year=2017,
                                            hhsize = 4, meter_size = '3/4"', usage_zone = 1, landscape_area = 2000,
                                            et_amount = 7.0, wrap_customer = "No", irr_area = 2000, 
-                                           carw_customer = "No", season = "Winter", tax_exemption = "granted", 
+                                           carw_customer = "No", season = "Summer", tax_exemption = "granted", 
                                            lot_size_group = 3, temperature_zone = "Medium", pressure_zone = 1, 
                                            water_font = "city_delivered", city_limits = "inside_city", 
                                            water_type = "potable", rate_class = "C1", dwelling_units = 10, 
@@ -64,7 +80,7 @@ df_adjustable_sample <- tbl_df(data.frame (usage_month = 7, days_in_period = 30,
 start <- 0;
 end <- 50;
 interval <- 5;
-df_usage <- as.data.frame(list("usage_ccf"=1:10, "cust_class"="RESIDENTIAL_SINGLE"))
+df_usage <- as.data.frame(list("usage_ccf"=15, "cust_class"="RESIDENTIAL_SINGLE"))
 df_sample <-  left_join(df_usage, df_adjustable_sample, by="cust_class")
 
 
@@ -127,6 +143,34 @@ df_final_bill <- df_final_bill[which(df_final_bill$bill_frequency != "Annually")
 ```
 
 ```{r, echo=FALSE}
+
+# #generating csv with rates for merge with demographics
+# 
+# #getting rid of the more recent years
+# df_final_bill$effective_date <- as.Date(df_final_bill$effective_date)        #convert effective_date to Date
+# df_final_bill <- df_final_bill[year(df_final_bill$effective_date) < 2018,]   # drop years >= 2018
+# 
+# #getting rid of duplicates
+# #making sure to keep the most recent values
+# df_final_bill <- df_final_bill[rev(order(df_final_bill$utility_name, df_final_bill$effective_date)),]
+# #drop duplicates
+# df_final_bill <- df_final_bill[ !duplicated(df_final_bill$utility_name), ]
+# df_final_bill <- df_final_bill[order(df_final_bill$utility_name),] #reorder alphabetically
+# 
+# #adding pwsid
+# supplier_pwsid <- read.csv('data/utilities_for_OWRS.csv', stringsAsFactors=FALSE)
+# df_final_bill$fuzzy_match <- as.character(sapply(df_final_bill$utility_name, GetCloseMatches,
+#                               sequence_strings = supplier_pwsid$Agency_Name, n=1L, cutoff = 0.85))
+# df_final_bill <- merge(df_final_bill, supplier_pwsid, by.x = "fuzzy_match", by.y = "Agency_Name", all.x=TRUE, all.y=FALSE)
+# 
+# #write csv with the df_final_bill data frame
+# df_final_bill$utility_id <- as.character(df_final_bill$utility_id)
+# write.csv(df_final_bill, "data/bill_15ccf_residential.csv")
+
+```
+
+
+```{r, echo=FALSE, message=FALSE}
 #library(rgdal)
 
 #shape <- readOGR(dsn = "../Shapefiles", layer = "service_areas_cadc_with_utility_id")
@@ -143,30 +187,38 @@ df_final_bill <- df_final_bill[which(df_final_bill$bill_frequency != "Annually")
 #setwd("../../Documents/WaterRateTester/")
 ```
 
-## Summary Statistics
+# Summary Statistics
 
 This section discusses general characteristics of the rates for utilities analyzed in this survey.
 
 ```{r, echo=FALSE}
 #The usage_ccf to evaluate for the histograms and bar chart
 singleTargetValue <- 10;
+
 ```
 
-```{r, echo=FALSE}
+```{r bill_frequency_pie, echo=FALSE, fig.cap = bill_freq_cap}
 plot_bill_frequency_piechart(df_final_bill)
+
+bill_freq_cap <- fig_nums(name='bill_frequency_piechart', caption= 'Bill Frequency Pie Chart. About three quarters of the water agencies use a monthly billing system.')
 ```
 
-```{r, echo=FALSE}
+```{r mean_bill_pie, echo=FALSE, fig.cap = mean_bill_pie_cap}
 plot_mean_bill_pie(df_final_bill, singleTargetValue)
+
+mean_bill_pie_cap <- fig_nums(name='mean_bill_pie', caption= 'Average bill by parts for all agencies, considering a consumption of 10 CCF in a month. The average total bill is $60.68. With an average service charge (fixed) of $24.63 (40.6%) and an average commodity charge (variable) of $35.61 (58.7%).')
 ```
 
 
 
-```{r, echo=FALSE}
+```{r rate_type_pie, echo=FALSE}
 plot_rate_type_pie(df_final_bill)
+
+
 ```
 
-```{r, echo=FALSE}
+```{r commodity_charge_vs_usage, echo=FALSE}
+
 plot_commodity_charges_vs_usage(df_final_bill, start, end, interval)
 ```
 
