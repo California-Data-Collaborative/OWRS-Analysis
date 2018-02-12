@@ -46,8 +46,10 @@ df_OWRS <- tbl_df(as.data.frame(list("filepath"=getFileNames(owrs_path)), string
 ```{r, echo=FALSE}
 #load supplier reports, geoinformation and pwsid_record
 supplier_reports <- read.csv('data/supplier_report.csv', stringsAsFactors=FALSE)
-supplier_geo <- read.csv('data/suppliers.csv', stringsAsFactors=FALSE)
+#supplier_geo <- read.csv('data/suppliers.csv', stringsAsFactors=FALSE)
 supplier_pwsid <- read.csv('data/utilities_for_OWRS.csv', stringsAsFactors = FALSE)
+
+
 
 # append to df_OWRS the best fuzzy match for utility_name to get pwsid
 # cutoff chosen arbitraily, other values can be tested
@@ -55,22 +57,35 @@ supplier_pwsid <- read.csv('data/utilities_for_OWRS.csv', stringsAsFactors = FAL
 df_OWRS$fuzzy_match <- as.character(sapply(df_OWRS$utility_name, GetCloseMatches,
                               sequence_strings = supplier_pwsid$Agency_Name, n=1L, cutoff = 0.85))
 
+
+## We have to manually check here if the fuzzy matching is not getting "no matches" (list()) or false positives.
+correct_matches <- read.csv('data/correct_fuzzy_matches.csv')
+
+fuzzy_check <- df_OWRS[which(df_OWRS$utility_name != df_OWRS$fuzzy_match),]
+fuzzy_check <- fuzzy_check[which(!(fuzzy_check$utility_name %in% correct_matches$utility_name)), ]
+
+
+no_matches <- fuzzy_check[which(fuzzy_check$fuzzy_match=="list()"),]
+paste("There were", nrow(no_matches), "NO-MATCHED utilities.")
+paste("Please, check also the fuzzy_check data frame for false positives.")
+paste("Matches to check for false positives", nrow(fuzzy_check))
+
+## Updating the list of correct_matches after checking that they are not false positives
+# correct_matches <- rbind(correct_matches,fuzzy_check[,c("utility_name", "fuzzy_match")] )
+
+## Saving updated list of correct matches
+# write.csv(fuzzy_check[,c("utility_name", "fuzzy_match")], "data/correct_fuzzy_matches.csv")
+
+```
+
+```{r}
 # get pswid
 merged_OWRS <- merge(df_OWRS, supplier_pwsid, by.x = "fuzzy_match", by.y = "Agency_Name", all.x=TRUE, all.y=FALSE)
+# merge with suplier report
+merged_OWRS <- merge(merged_OWRS, supplier_reports, by.x = "PWSID", by.y = "report_pwsid", all.x=TRUE, all.y=FALSE)
 ```
 
 
-
-```{r, echo=FALSE}
-## Tentatively using the full pwsid list (6522 entries) and the stringdist library (other distance metrics) to match the ## utility names
-## Could be a good "second pass" for the ones not found by fuzzywuzy over the smaller pwsid list
-
-# supplier_pwsid <- read.csv('data/pwsid.csv', stringsAsFactors = FALSE)
-# idx_match <- amatch(toupper(df_OWRS$utility_name), supplier_pwsid$Water_System_Name, matchNA=FALSE, method='cosine', maxDist = 0.05)
-# 
-# df_OWRS$fuzzy_match <- supplier_pwsid[idx_match, "Water_System_Name"]
-# View(df_OWRS)
-```
 
 
 

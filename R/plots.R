@@ -79,7 +79,7 @@ plot_rate_type_pie <- function(df){
   {
     Structure <- c( "Budget", "Tiered", "Uniform", "Other")
     Structure_DF <- data.frame(Structure, c(noBudget, noTiered, noUniform, noOtherBillType))
-    names(Schedule_DF) <- c("Rate_Structure", "Value")
+    names(Structure_DF) <- c("Rate_Structure", "Value")
   } else {
     Structure <- c( "3. Uniform", "2. Tiered", "1. Budget")
     Structure_DF <- data.frame(Structure, c(noUniform, noTiered, noBudget))
@@ -127,6 +127,18 @@ plot_bills_vs_usage <- function(df, start, end, interval){
   bill_scatter
 }
 
+boxplot_bills_vs_usage <- function(df, start, end, interval){
+  bill_box <- ggplot(df, aes(x=usage_ccf, y=bill, group=usage_ccf)) +
+    geom_boxplot()  +
+    scale_x_discrete(name = "Usage (CCF)") +
+    scale_y_continuous(name = "Total Bill (Dollars)")+
+    ggtitle("Total Bill Vs. Usage CCF", subtitle = paste("At every", interval, "CCF from", start, "to", end))+
+    theme(axis.text.x = element_text(size = 14), axis.text.y = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 25),
+          legend.position = "none")
+  
+  bill_box
+}
+
 plot_ratio_histogram <- function(df, demo_ccf){
   filtered <- df %>% filter(usage_ccf == demo_ccf) %>%
     distinct(utility_name, .keep_all=TRUE)
@@ -163,5 +175,73 @@ plot_bill_histogram <- function(df, demo_ccf){
   bill_histogram
 }
 
+plot_avg_price_history <- function(df){
+  avg_price_hist <- ggplot(df,
+                           aes(x=as.Date(reference_date), y=bill, group=as.Date(reference_date))) +
+    geom_boxplot()  +
+    scale_x_date(name = "")+
+    scale_y_continuous(name = "Total Bill (Dollars)", limits = c(0,200)) +
+    ggtitle("Average Price History for 15 CCF")+
+    theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 25),
+          legend.position = "none")
+  
+  avg_price_hist
+  
+}
 
+plot_efficiency_ts <- function(df){
+  
+  eff_ts <- ggplot(df, 
+                   aes(x=as.Date(report_date), y=pct_above_target, group=report_monthyear)) +
+    geom_boxplot()  +
+    scale_x_date(name="")+
+    scale_y_continuous(name = "Percentage above target")+
+    ggtitle("Efficiency Time Series")+
+    theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 25),
+          legend.position = "none")
+  
+  
+  eff_ts
+}
 
+plot_gpcd_ts <- function(df){
+  
+  gpcd_ts <- ggplot(df, 
+                    aes(x=as.Date(report_date), y=report_gpcd_calculated, group=report_monthyear)) +
+    geom_boxplot()  +
+    scale_x_date(name = "")+
+    scale_y_continuous(name = "Residential GPCD (calculated)") +
+    ggtitle("GPCD (calculated) Time Series")+
+    theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 25),
+          legend.position = "none")
+  
+  gpcd_ts
+}
+
+plot_eff_vs_bill <- function(df){
+  
+  eff_vs_bill <- ggplot(df, 
+                        aes(x=bill, y=pct_above_target)) +
+    geom_point(shape=1) +
+    labs(x = "Total Bill (Dollars)", y = "Percentage Above Target") +
+    ggtitle("Efficiency vs Total bill")+
+    theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 25),
+          legend.position = "none")+
+    geom_smooth(method='lm')
+  eff_vs_bill
+  
+}
+
+plot_eff_vs_pctFixed <- function(df){
+  
+  eff_vs_pctFixed <- ggplot(df, 
+                            aes(x=percentFixed, y=pct_above_target)) +
+    geom_point(shape=1) +
+    labs(x = "Percentage of Service Charge in Total Bill", y = "Percent above target") +
+    ggtitle("Efficiency vs Percent of Fixed Rate")+
+    theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 25),
+          legend.position = "none")+
+    geom_smooth(method='lm')
+  
+  eff_vs_pctFixed
+}

@@ -40,9 +40,10 @@ singleUtilitySim <- function(df_sample, df_OWRS_row, owrs_file, current_class){
   df_temp <- df_sample %>%
     mutate(utility_id = df_OWRS_row$utility_id,
            utility_name = df_OWRS_row$utility_name,
+           effective_date = df_OWRS_row$effective_date,
            bill_frequency = owrs_file$metadata$bill_frequency,
            unit_type = ut,
-           bill_type = bt)
+           bill_type = as.character(bt))
   
   isBimonthly <- length(grep("[Bb][Ii]", df_temp$bill_frequency[1]))
   
@@ -86,7 +87,7 @@ calculate_bills_for_all_utilities <- function(df_OWRS, df_sample, owrs_path, cus
     #usage_month = NA,
     #usage_year = NA,
     cust_class = NA,
-    #usage_date = NA,
+    usage_date = NA,
     service_charge = NA,
     commodity_charge = NA,
     percentFixed = NA,
