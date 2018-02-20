@@ -23,175 +23,78 @@ This report provides the combined analysis of data from 4 different sources:
 
 
 
+
+
+
 # Summary Statistics
 
 This section discusses general characteristics of the rates for utilities analyzed in this survey.
 
 
 
-![Figure  1: Bill Frequency Pie Chart. About three quarters of the water agencies use a monthly billing system.](owrs_analysis_files/figure-html/bill_frequency_pie-1.png)
-
-![Figure  2: Average bill by parts for all agencies, considering a consumption of 10 CCF in a month. The average total bill is $60.68. With an average service charge (fixed) of $24.63 (40.6%) and an average commodity charge (variable) of $35.61 (58.7%).](owrs_analysis_files/figure-html/mean_bill_pie-1.png)
+![Figure  1: Bill Frequency Pie Chart.](owrs_analysis_files/figure-html/bill_frequency_pie-1.png)
 
 
-
-![](owrs_analysis_files/figure-html/rate_type_pie-1.png)<!-- -->
-
-![](owrs_analysis_files/figure-html/commodity_charge_vs_usage-1.png)<!-- -->
+![Figure  2: Average bill by parts for all agencies, considering a consumption of 15 CCF in a month. The average total bill is $60.68. With an average service charge (fixed) of $24.63 (40.6%) and an average commodity charge (variable) of $35.61 (58.7%).](owrs_analysis_files/figure-html/mean_bill_pie-1.png)
 
 
 
-![](owrs_analysis_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+![Figure  3: Types of rate structures.](owrs_analysis_files/figure-html/rate_type_pie-1.png)
+
+![Figure  4: Commodity Charge vs Usage.](owrs_analysis_files/figure-html/commodity_charge_vs_usage-1.png)
+
+![Figure  5: Total Bill vs Usage.](owrs_analysis_files/figure-html/total_bill_vs_usage-1.png)
+
+![Figure  6: Boxplot of Total Bill vs Usage.](owrs_analysis_files/figure-html/total_bill_vs_usage_box-1.png)
 
 
 
 
-![](owrs_analysis_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+![Figure  7: Ratio of Service charge to total bill at 15 CCF.](owrs_analysis_files/figure-html/ratio_histogram-1.png)
 
-![](owrs_analysis_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+![Figure  8: Total bill at 15 CCF.](owrs_analysis_files/figure-html/bill_histogram-1.png)
 
 # Rates x Efficiency
-## Define Period of Analysis
 
-## Calculate Rates
+This section provides an analysis of the relationships between the rates charged by each water agency and the efficiency in water use in the areas served by those agencies.
 
-```
-## [1] 81
-```
 
-```
-## Format error in file: Goleta Water District - 1215/04-01-2017.owrs 
-##  Error in value[[3L]](cond): The following map keys are missing from the OWRS file: (3/4")
-## 
-```
+The period considered for the analysis is 1/2017 to 12/2017.
 
-```
-## [1] 85
-```
 
-```
-## Format error in file: Humboldt Bay Municipal Water District - 1370/07-01-2017.owrs 
-##  Error in value[[3L]](cond): The following map keys are missing from the OWRS file: (3/4")
-## 
-```
+## Rates in the period
 
-```
-## [1] 86
-```
-
-```
-## Format error in file: Humboldt Community Services District - 1371/08-01-2017.owrs 
-##  Error in value[[3L]](cond): The following map keys are missing from the OWRS file: (3/4")
-## 
-```
-
-```
-## [1] 110
-```
-
-```
-## Format error in file: Mid-Peninsula Water District - 1827/07-01-2017.owrs 
-##  Error in value[[3L]](cond): The following map keys are missing from the OWRS file: (3/4")
-## 
-```
-
-```
-## [1] 118
-```
-
-```
-## Format error in file: North Marin Water District - 1996/06-01-2017.owrs 
-##  Error in value[[3L]](cond): The following map keys are missing from the OWRS file: (3/4")
-## 
-```
-
-```
-## [1] 179
-```
-
-```
-## Format error in file: Western Municipal Water District - 3150/01-01-2018.owrs 
-##  Error in value[[3L]](cond): argument is of length zero
-## 
-```
 Average water rates history:
+![Figure  9: Average price charged for 15 CCF across all agencies included in the survey.](owrs_analysis_files/figure-html/avg_price_history-1.png)
 
 
-
-## Calculate Efficiency
+## Efficiency in the period
 Load suppliers report info and join with the Utilities list from the OWRS files
 
-Calculate Efficiency from the suppliers reports
 
 
 
-```
-## Warning: Removed 39 rows containing non-finite values (stat_boxplot).
-```
-
-![](owrs_analysis_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
+![Figure  10: Efficiency measured as percentage above target.](owrs_analysis_files/figure-html/efficiency_ts-1.png)
 
 
-```
-## Warning: Removed 39 rows containing non-finite values (stat_boxplot).
-```
-
-![](owrs_analysis_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
-## Compare Rates and efficiency
-
-
-Scatter plot of Efficiency (pct_above_target) vs Rates (Total Bill for 15 CCF)
-![](owrs_analysis_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
-
-Scatter plot of Efficiency vs Rates Structure (% Fixed  - for 15 CCF)
-![](owrs_analysis_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
-
-## Joining Data from the Qualitative Survey
-
-```
-## Warning: NAs introduced by coercion
-
-## Warning: NAs introduced by coercion
-```
-
-```r
-pct_costs <- ggplot(quali_survey, aes(costs_pct_fixed)) + geom_histogram(bins = 10)
-
-pct_costs
-```
-
-```
-## Warning: Removed 87 rows containing non-finite values (stat_bin).
-```
-
-![](owrs_analysis_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
+## Comparing Rates and Efficiency
 
 
 
-
-```r
-pct_rev <- ggplot(quali_survey, aes(rev_pct_fixed)) + geom_histogram(bins = 10)
-
-pct_rev
-```
-
-```
-## Warning: Removed 83 rows containing non-finite values (stat_bin).
-```
-
-![](owrs_analysis_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
+![Figure  11: Efficiency vs Total Bill.](owrs_analysis_files/figure-html/eff_vs_total_bill-1.png)
 
 
-```r
-quali_survey$fixedRev_per_fixedCosts <- quali_survey$rev_pct_fixed / quali_survey$costs_pct_fixed
+![Figure  12: Efficiency vs Percentage of Service Charge in Total Bill.](owrs_analysis_files/figure-html/eff_vs_pctFixed-1.png)
 
-ggplot(quali_survey, aes(fixedRev_per_fixedCosts)) + geom_histogram(binwidth = 0.5)
-```
+## Operational Costs and Revenue in the Water Agencies
 
-```
-## Warning: Removed 87 rows containing non-finite values (stat_bin).
-```
 
-![](owrs_analysis_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
 
+![Figure  13: Percentage of costs that are fixed for an Agency.](owrs_analysis_files/figure-html/pct_fixed_costs-1.png)
+
+
+
+![Figure  14: Percentage of an Agency's revenues that are fixed.](owrs_analysis_files/figure-html/pct_fixed_rev-1.png)
+
+![Figure  15: Ratio of Percentage of Fixed Revenue per Percentage of Fixed Costs.](owrs_analysis_files/figure-html/fixedRev_per_fixedCosts-1.png)
 

@@ -34,6 +34,7 @@ plot_bill_frequency_piechart <- function(df){
     labs(fill = "Bill Frequencies")
   
   billFrequencyPie
+ 
 }
 
 
@@ -109,7 +110,7 @@ plot_commodity_charges_vs_usage <- function(df, start, end, interval){
     geom_line() +
     labs(x = "Usage CCF", y = "Commodity Charge", color = "Utility") +
     ggtitle("Commodity Charge Vs. Usage CCF", subtitle = paste("At every", interval, "CCF from", start, "to", end)) +
-    theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 25),
+    theme(axis.text = element_text(size = 12), axis.title = element_text(size = 16), title = element_text(size = 20),
           legend.position = "none")
   
   commodity_scatter
@@ -180,7 +181,7 @@ plot_avg_price_history <- function(df){
                            aes(x=as.Date(reference_date), y=bill, group=as.Date(reference_date))) +
     geom_boxplot()  +
     scale_x_date(name = "")+
-    scale_y_continuous(name = "Total Bill (Dollars)", limits = c(0,200)) +
+    scale_y_continuous(name = "Total Bill (Dollars)") +
     ggtitle("Average Price History for 15 CCF")+
     theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 25),
           legend.position = "none")
