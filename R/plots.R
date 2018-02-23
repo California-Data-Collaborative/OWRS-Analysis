@@ -130,9 +130,9 @@ plot_bills_vs_usage <- function(df, start, end, interval){
 
 boxplot_bills_vs_usage <- function(df, start, end, interval){
   bill_box <- ggplot(df, aes(x=usage_ccf, y=bill, group=usage_ccf)) +
-    geom_boxplot()  +
+    geom_boxplot(outlier.shape=NA)  +
     scale_x_discrete(name = "Usage (CCF)") +
-    scale_y_continuous(name = "Total Bill (Dollars)")+
+    scale_y_continuous(name = "Total Bill (Dollars)", limits = c(0, 400))+
     ggtitle("Total Bill Vs. Usage CCF", subtitle = paste("At every", interval, "CCF from", start, "to", end))+
     theme(axis.text.x = element_text(size = 14), axis.text.y = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 25),
           legend.position = "none")
@@ -147,7 +147,10 @@ plot_ratio_histogram <- function(df, demo_ccf){
   ratio_histogram <- ggplot(filtered, aes(x=percentFixed)) +
     geom_histogram(binwidth=.05, colour="black", fill="white")+
     labs(x = "Proportion of Total Bill", y = "Number of utilities in that range")+
-    ggtitle(paste("Ratio of Service Charge to Total Bill at", demo_ccf, "Usage CCF"))+
+    ggtitle(paste("Ratio of Service Charge to Total Bill at", demo_ccf, "Usage CCF"), 
+            subtitle = paste("No. of Agencies: ", length(filtered$percentFixed), 
+                             " Mean: ", round(mean(filtered$percentFixed), 3),
+                             " Std: ", round(sd(filtered$percentFixed), 3)))+
     scale_y_continuous(expand = c(0,0))+
     theme(axis.title.x = element_text(size = 15), axis.title.y = element_text(size = 15),
           axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10),
@@ -164,7 +167,10 @@ plot_bill_histogram <- function(df, demo_ccf){
   bill_histogram <- ggplot(filtered, aes(x=bill)) +
     geom_histogram(binwidth=(max(filtered$bill)- min(filtered$bill))/ round(length(filtered$bill)/6), colour="black", fill="white")+
     labs(x = "Bill Amount ($)", y = "Number of Utilities in that Range")+
-    ggtitle(paste("Total Bill at", singleTargetValue, "Usage CCF"))+
+    ggtitle(paste("Total Bill at", singleTargetValue, "Usage CCF"),
+            subtitle = paste("No. of Agencies: ", length(filtered$bill), 
+                             " Mean: ", round(mean(filtered$bill), 1),
+                             " Std: ", round(sd(filtered$bill), 1)))+
     scale_y_continuous(expand = c(0,0))+
     #scale_x_continuous(breaks=seq(round(min(filtered$bill)), round(max(filtered$bill)), round((max(filtered$bill)- min(filtered$bill))/ (length(filtered$bill)/8), 0)))+
     theme(axis.title.x = element_text(size = 15), axis.title.y = element_text(size = 15),
@@ -179,9 +185,9 @@ plot_bill_histogram <- function(df, demo_ccf){
 plot_avg_price_history <- function(df){
   avg_price_hist <- ggplot(df,
                            aes(x=as.Date(reference_date), y=bill, group=as.Date(reference_date))) +
-    geom_boxplot()  +
+    geom_boxplot(outlier.shape = NA)  +
     scale_x_date(name = "")+
-    scale_y_continuous(name = "Total Bill (Dollars)") +
+    scale_y_continuous(name = "Total Bill (Dollars)",limits = c(0, 180)) +
     ggtitle("Average Price History for 15 CCF")+
     theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 25),
           legend.position = "none")
@@ -193,10 +199,10 @@ plot_avg_price_history <- function(df){
 plot_efficiency_ts <- function(df){
   
   eff_ts <- ggplot(df, 
-                   aes(x=as.Date(report_date), y=pct_above_target, group=report_monthyear)) +
-    geom_boxplot()  +
+                   aes(x=as.Date(report_monthyear), y=pct_above_target*100, group=report_monthyear)) +
+    geom_boxplot(outlier.shape = NA)  +
     scale_x_date(name="")+
-    scale_y_continuous(name = "Percentage above target")+
+    scale_y_continuous(name = "Percentage above target", limits = c(-100, 100))+
     ggtitle("Efficiency Time Series")+
     theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 25),
           legend.position = "none")
@@ -209,7 +215,7 @@ plot_gpcd_ts <- function(df){
   
   gpcd_ts <- ggplot(df, 
                     aes(x=as.Date(report_date), y=report_gpcd_calculated, group=report_monthyear)) +
-    geom_boxplot()  +
+    geom_boxplot(outlier.shape=NA)  +
     scale_x_date(name = "")+
     scale_y_continuous(name = "Residential GPCD (calculated)") +
     ggtitle("GPCD (calculated) Time Series")+
