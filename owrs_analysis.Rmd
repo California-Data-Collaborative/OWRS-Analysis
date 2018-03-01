@@ -206,6 +206,7 @@ bill_frequency_pie <- plot_bill_frequency_piechart(df_final_bill %>% filter(usag
 bill_frequency_pie
 bill_freq_cap <- fig_nums(name='bill_frequency_piechart', caption= 'Bill Frequency Pie Chart.')
 ```
+
 `r fig_nums("bill_frequency_piechart", display = "cite")` above shows that `r round(bill_frequency_pie$data[1, 'Value'] / sum(bill_frequency_pie$data[, 'Value']) * 100, digits=1)`% of the agencies charge their customers on a monthly basis.
 That indicates an increase in relation to the previous survey (2015), showing that there seems to be trend in Agencies moving from a bi-monthly billing system to a monthly one. 
 
@@ -214,6 +215,7 @@ mean_bill_pie <- plot_mean_bill_pie(df_final_bill, singleTargetValue)
 mean_bill_pie
 mean_bill_pie_cap <- fig_nums(name='mean_bill_pie', caption= 'Average bill by parts for all agencies, considering a consumption of 15 CCF in a month.')
 ```
+
 In terms of the different parts from a bill, `r fig_nums("mean_bill_pie", display = "cite")` shows that for a usage of `r singleTargetValue` CCF the commodity charge portion from the bill is the biggest one representing on average `r round(mean_bill_pie$data[2, 'Value'] / sum(bill_frequency_pie$data[, 'Value']) * 100, digits=1)`% of the total bill.
 
 ```{r rate_type_pie, echo=FALSE, fig.cap = rate_type_pie_cap}
@@ -222,6 +224,7 @@ rate_type_pie
 rate_type_pie_cap <- fig_nums(name='rate_type_pie', caption= 'Types of rate structures.')
 
 ```
+
 From analyzing the different rate structures adopted by each agency, `r fig_nums("rate_type_pie", display = "cite")` shows that most of the agencies(`r round(rate_type_pie$data[2, 'Value'] / sum(rate_type_pie$data[, 'Value']) * 100, digits=1)`%) adopt a tiered rate structure, but a significant amount still adopt an uniform rate structure (`r round(rate_type_pie$data[3, 'Value'] / sum(rate_type_pie$data[, 'Value']) * 100, digits=1)`%)
 
 ```{r commodity_charge_vs_usage, echo=FALSE}
@@ -243,8 +246,9 @@ From analyzing the different rate structures adopted by each agency, `r fig_nums
 
 service_ratio_histogram <- plot_ratio_histogram(df_final_bill, singleTargetValue)
 service_ratio_histogram
-ratio_histogram_cap <- fig_nums(name='ratio_histogram', caption= 'Ratio of Service charge to total bill at 15 CCF.')
+ratio_histogram_cap <- fig_nums(name='service_ratio_histogram', caption= 'Ratio of Service charge to total bill at 15 CCF.')
 ```
+
 The histogram in `r fig_nums("service_ratio_histogram", display = "cite")` shows the distribution and the mean of the ratio between the service charge and the total bill for each agency. That number is a good proxy for the proportion of revenue in each agency that is fixed and does not depend on the consumer's water usage.
 
 ```{r bill_histogram, echo=FALSE, fig.cap = bill_histogram_cap}
@@ -253,6 +257,7 @@ bill_histogram <- plot_bill_histogram(df_final_bill, singleTargetValue)
 bill_histogram
 bill_histogram_cap <- fig_nums(name='bill_histogram', caption= 'Total bill at 15 CCF.')
 ```
+
 `r fig_nums("bill_histogram", display = "cite")` shows an histogram of the different amounts charged by each agency for a water usage of 15 CCF in single family residential units.
 
 ```{r total_bill_vs_usage_box, echo=FALSE, warning=FALSE, fig.cap = total_bill_vs_usage_box_cap}
@@ -261,6 +266,7 @@ total_bill_vs_usage_box <- boxplot_bills_vs_usage(df_final_bill, start, end, int
 total_bill_vs_usage_box
 total_bill_vs_usage_box_cap <- fig_nums(name='total_bill_vs_usage_box', caption= 'Boxplot of Total Bill vs Usage.')
 ```
+
 `r fig_nums("total_bill_vs_usage_box", display = "cite")` ilustrates how the variability of the total water bill among agencies increases the higher the water usage by single residential units. It noteworthy that at a usage as low as 10 to 15 CCF there can be already a difference of two to three fold between agencies. 
 
 # Relating Rates to Efficiency
@@ -354,6 +360,7 @@ plot_avg_price_history(df_final_bill)
 avg_price_history_cap <- fig_nums(name='avg_price_history', caption= 'Average price charged for 15 CCF across all agencies included in the survey.')
 
 ```
+
 `r fig_nums("avg_price_history", display = "cite")` shows that the prices remained fairly stable throughout the year. Although there was a large variability across agencies the the total bill for 15 CCF of usage for about half of the agencies stayed in the interval between $50 and $80 for most of the year. 
 
 ## Efficiency in the period
@@ -399,6 +406,7 @@ plot_efficiency_ts(merged_OWRS %>% filter(report_monthyear %in% reference_period
 efficiency_ts_cap <- fig_nums(name='efficiency_ts', caption= 'Efficiency measured as percentage above target.')
 
 ```
+
 In terms of Efficiency `r fig_nums("efficiency_ts", display = "cite")` shows a considerable seasonal variation and that even with that variation, most agencies have met theri efficiency goals throughout the whole period. 
 
 ```{r, echo=FALSE}
@@ -430,6 +438,7 @@ eff_vs_total_bill <- plot_eff_vs_bill(agg_eff_vs_rate)
 eff_vs_total_bill
 eff_vs_total_bill_cap <- fig_nums(name = 'eff_vs_total_bill', caption = 'Efficiency vs Total Bill.')
 ```
+
 Despite the large variance around the linear fit, `r fig_nums("eff_vs_total_bill", display = "cite")` does show a significant[* pearson? another statistical test?] negative correlation between the percentage above target and the total bill paid by residential customers in single-family units. 
 
 ```{r eff_vs_pctFixed, echo=FALSE, fig.cap = eff_vs_pctFixed_cap}
@@ -443,6 +452,7 @@ eff_vs_pctFixed
 eff_vs_pctFixed_cap <- fig_nums(name = 'eff_vs_pctFixed', 
                                 caption = 'Efficiency vs Percentage of Service Charge in Total Bill.')
 ```
+
 Furthermore, `r fig_nums("eff_vs_pctFixed", display = "cite")` shows a positive correlation [significant? pearson?] of Percentage of Service Charge and Percentage Above Target. Indicating that the more sensitive their bill is to the amount of water they consume, more efficient the customers tend to be.  
 
 
@@ -489,6 +499,7 @@ pct_fixed_rev <- ggplot(quali_survey, aes(rev_pct_fixed)) +
 pct_fixed_rev
 pct_fixed_rev_cap <- fig_nums(name='pct_fixed_rev', caption = "Percentage of an Agency's revenues that are fixed.")
 ```
+
 In this year's survey, some water agencies indicated (as an optional response) how much of their revenue and how much of their costs come from fixed sources that do not depend on the amount of water usage in a given period. `r fig_nums("pct_fixed_costs", display = "cite")` shows that on average, the water agencies that provided that information, have `r round(mean(quali_survey$costs_pct_fixed, na.rm=TRUE))` % of their costs fixed, while `r round(mean(quali_survey$rev_pct_fixed, na.rm=TRUE))` % of their revenue being fixed, as show in `r fig_nums("pct_fixed_rev", display = "cite")`.
 
 
@@ -507,4 +518,5 @@ fixedRev_per_fixedCosts <- ggplot(quali_survey, aes(fixedRev_per_fixedCosts)) +
 fixedRev_per_fixedCosts
 fixedRev_per_fixedCosts_cap <- fig_nums(name='fixedRev_per_fixedCosts', caption = "Ratio of Percentage of Fixed Revenue per Percentage of Fixed Costs.")
 ```
-In addition, when computing the ratio between the percentage of fixed revenue to percentage of fixed costs, `r fig_nums("pct_fixed_rev", display = "cite")` shows that at least half of the agencies have their percentage of fixed revenue smaller than or equal to the percentage of fixed costs.
+
+In addition, when computing the ratio between the percentage of fixed revenue to percentage of fixed costs, `r fig_nums("fixedRev_per_fixedCosts", display = "cite")` shows that at least half of the agencies have their percentage of fixed revenue smaller than or equal to the percentage of fixed costs.

@@ -65,16 +65,20 @@ fuzzy_check <- df_OWRS[which(df_OWRS$utility_name != df_OWRS$fuzzy_match),]
 fuzzy_check <- fuzzy_check[which(!(fuzzy_check$utility_name %in% correct_matches$utility_name)), ]
 
 
-no_matches <- fuzzy_check[which(fuzzy_check$fuzzy_match=="list()"),]
-paste("There were", nrow(no_matches), "NO-MATCHED utilities.")
+not_matched <- fuzzy_check[which(fuzzy_check$fuzzy_match=="list()"),]
+fuzzy_check <- fuzzy_check[which(!fuzzy_check$fuzzy_match=="list()"),]
+paste("There were", nrow(no_matches), "NOT-MATCHED utilities.")
 paste("Please, check also the fuzzy_check data frame for false positives.")
 paste("Matches to check for false positives", nrow(fuzzy_check))
 
+View(not_matched)
+View(fuzzy_check)
+
 ## Updating the list of correct_matches after checking that they are not false positives
-# correct_matches <- rbind(correct_matches,fuzzy_check[,c("utility_name", "fuzzy_match")] )
+correct_matches <- rbind(correct_matches,fuzzy_check[,c("utility_name", "fuzzy_match")] )
 
 ## Saving updated list of correct matches
-# write.csv(fuzzy_check[,c("utility_name", "fuzzy_match")], "data/correct_fuzzy_matches.csv")
+#write.csv(fuzzy_check[,c("utility_name", "fuzzy_match")], "data/correct_fuzzy_matches.csv",  row.names=FALSE)
 
 ```
 
