@@ -130,7 +130,6 @@ calculate_bills_for_all_utilities <- function(df_OWRS, df_sample, owrs_path, cus
       return(NULL)
     })
     
-    
     #If there is an error format the row data accordingly
     if(!is.null(owrs_file))
     {
@@ -141,7 +140,6 @@ calculate_bills_for_all_utilities <- function(df_OWRS, df_sample, owrs_path, cus
 
         tmp_sample <- df_sample
         if(grepl('3/4', owrs_str)){
-          next
         }else if(grepl('5/8', owrs_str)){
           tmp_sample <- df_sample
           tmp_sample$meter_size <- '5/8"'
