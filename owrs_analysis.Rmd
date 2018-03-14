@@ -9,7 +9,7 @@ output:
 library(dplyr)
 library(ggplot2)
 library(scales)
-library(raster)
+# library(raster)
 library(RateParser)
 library(yaml)
 library(purrr)
@@ -80,7 +80,7 @@ df_adjustable_sample <- tbl_df(data.frame (usage_month = 7, days_in_period = 31,
 start <- 0;
 end <- 50;
 interval <- 5;
-df_usage <- as.data.frame(list("usage_ccf"=15, "cust_class"="RESIDENTIAL_SINGLE"))
+df_usage <- as.data.frame(list("usage_ccf"=seq(start,end,interval), "cust_class"="RESIDENTIAL_SINGLE"))
 df_sample <-  left_join(df_usage, df_adjustable_sample, by="cust_class")
 
 
@@ -172,7 +172,7 @@ This section discusses general characteristics of the rates for utilities analyz
 
 ```{r, echo=FALSE}
 #The usage_ccf to evaluate for the histograms and bar chart
-singleTargetValue <- 10;
+singleTargetValue <- 15;
 
 ```
 
@@ -243,67 +243,67 @@ plot_bill_histogram(df_final_bill, singleTargetValue)
 ```
 ## Calculate Rates
 ```{r, echo=FALSE}
-# Rates time series
-
-df_usage <- as.data.frame(list("usage_ccf"=15, "cust_class"="RESIDENTIAL_SINGLE"))
-
-# df_adjustable_sample <- tbl_df(data.frame (reference_date = reference_period,
-#                                            usage_month = month(reference_period),
-#                                            usage_year = year(reference_period),
-#                                            days_in_period = days_in_month(reference_period),
-#                                            hhsize = 4, meter_size = '3/4"', usage_zone = 1, landscape_area = 2000,
-#                                            et_amount = 7.0, wrap_customer = "No", irr_area = 2000,
-#                                            carw_customer = "No", season = "Winter", tax_exemption = "granted",
-#                                            lot_size_group = 3, temperature_zone = "Medium", pressure_zone = 1,
-#                                            water_font = "city_delivered", city_limits = "inside_city",
-#                                            water_type = "potable", rate_class = "C1", dwelling_units = 10,
-#                                            elevation_zone = 2, greater_than = "False", usage_indoor_budget_ccf = .3,
-#                                            meter_type = "Turbine", block = 1, tariff_area = 1, turbine_meter = "No",
-#                                            senior = "no", cust_class = customer_classes[1]))
-
-df_adjustable_sample$reference_date <- as.Date("2017-06-01")
-
-df_sample <-  left_join(df_usage, df_adjustable_sample, by="cust_class")
-
-df_bill <- calculate_bills_for_all_utilities(df_OWRS, df_sample, owrs_path, customer_classes)
-
-#list of utilities for which the 3/4" key was not found to calculate the rates
-#identified from the errors thrown when running this chunk of code.
-meter_size_58 <- c('Goleta Water District',
-                   'Humboldt Bay Municipal Water District', 
-                   'Mid-Peninsula Water District', 
-                   'North Marin Water District')
-
-df_sample$meter_size <- '5/8"'
-
-df_bill <- rbind(df_bill,
-                 calculate_bills_for_all_utilities(df_OWRS[df_OWRS$utility_name %in% meter_size_58,], 
-                                                   df_sample, owrs_path, customer_classes))
-#same process for the utilities where the smallest meter size is 1 inch.
-meter_size_1in <- c('Humboldt Community Services District')
-
-df_sample$meter_size <- '1"'
-
-df_bill <- rbind(df_bill,
-                 calculate_bills_for_all_utilities(df_OWRS[df_OWRS$utility_name %in% meter_size_1in,], 
-                                                   df_sample, owrs_path, customer_classes))
-
-#Format the Bill Information so that only valid data entries are presented, 
-#the decimal points are rounded, and the data is arranged by utility
-df_final_bill <- tbl_df(df_bill) %>% filter(!is.na(bill)) %>%
-  mutate(bill = round(as.numeric(bill), 2),
-         commodity_charge = round(as.numeric(commodity_charge), 2),
-         service_charge = round(service_charge, 2),
-         utility_name = as.character(utility_name),
-         bill_frequency = as.character(bill_frequency),
-         usage_ccf = ifelse(unit_type=="kgal", 1.33681*usage_ccf, usage_ccf)) %>%
-  filter(as.Date(reference_date) >= as.Date(effective_date) ) %>% 
-  group_by(utility_name, reference_date) %>%
-  filter(as.Date(effective_date) == max(as.Date(effective_date) )) %>%
-  arrange(utility_name)
-
-#getting rid of the annually charged bills until we fix the bill calculator
-df_final_bill <- df_final_bill[which(df_final_bill$bill_frequency != "Annually"),]
+# # Rates time series
+# 
+# df_usage <- as.data.frame(list("usage_ccf"=15, "cust_class"="RESIDENTIAL_SINGLE"))
+# 
+# # df_adjustable_sample <- tbl_df(data.frame (reference_date = reference_period,
+# #                                            usage_month = month(reference_period),
+# #                                            usage_year = year(reference_period),
+# #                                            days_in_period = days_in_month(reference_period),
+# #                                            hhsize = 4, meter_size = '3/4"', usage_zone = 1, landscape_area = 2000,
+# #                                            et_amount = 7.0, wrap_customer = "No", irr_area = 2000,
+# #                                            carw_customer = "No", season = "Winter", tax_exemption = "granted",
+# #                                            lot_size_group = 3, temperature_zone = "Medium", pressure_zone = 1,
+# #                                            water_font = "city_delivered", city_limits = "inside_city",
+# #                                            water_type = "potable", rate_class = "C1", dwelling_units = 10,
+# #                                            elevation_zone = 2, greater_than = "False", usage_indoor_budget_ccf = .3,
+# #                                            meter_type = "Turbine", block = 1, tariff_area = 1, turbine_meter = "No",
+# #                                            senior = "no", cust_class = customer_classes[1]))
+# 
+# df_adjustable_sample$reference_date <- as.Date("2017-06-01")
+# 
+# df_sample <-  left_join(df_usage, df_adjustable_sample, by="cust_class")
+# 
+# df_bill <- calculate_bills_for_all_utilities(df_OWRS, df_sample, owrs_path, customer_classes)
+# 
+# #list of utilities for which the 3/4" key was not found to calculate the rates
+# #identified from the errors thrown when running this chunk of code.
+# meter_size_58 <- c('Goleta Water District',
+#                    'Humboldt Bay Municipal Water District', 
+#                    'Mid-Peninsula Water District', 
+#                    'North Marin Water District')
+# 
+# df_sample$meter_size <- '5/8"'
+# 
+# df_bill <- rbind(df_bill,
+#                  calculate_bills_for_all_utilities(df_OWRS[df_OWRS$utility_name %in% meter_size_58,], 
+#                                                    df_sample, owrs_path, customer_classes))
+# #same process for the utilities where the smallest meter size is 1 inch.
+# meter_size_1in <- c('Humboldt Community Services District')
+# 
+# df_sample$meter_size <- '1"'
+# 
+# df_bill <- rbind(df_bill,
+#                  calculate_bills_for_all_utilities(df_OWRS[df_OWRS$utility_name %in% meter_size_1in,], 
+#                                                    df_sample, owrs_path, customer_classes))
+# 
+# #Format the Bill Information so that only valid data entries are presented, 
+# #the decimal points are rounded, and the data is arranged by utility
+# df_final_bill <- tbl_df(df_bill) %>% filter(!is.na(bill)) %>%
+#   mutate(bill = round(as.numeric(bill), 2),
+#          commodity_charge = round(as.numeric(commodity_charge), 2),
+#          service_charge = round(service_charge, 2),
+#          utility_name = as.character(utility_name),
+#          bill_frequency = as.character(bill_frequency),
+#          usage_ccf = ifelse(unit_type=="kgal", 1.33681*usage_ccf, usage_ccf)) %>%
+#   filter(as.Date(reference_date) >= as.Date(effective_date) ) %>% 
+#   group_by(utility_name, reference_date) %>%
+#   filter(as.Date(effective_date) == max(as.Date(effective_date) )) %>%
+#   arrange(utility_name)
+# 
+# #getting rid of the annually charged bills until we fix the bill calculator
+# df_final_bill <- df_final_bill[which(df_final_bill$bill_frequency != "Annually"),]
 ```
 Average water rates history:
 ```{r, echo=FALSE}
