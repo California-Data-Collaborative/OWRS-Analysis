@@ -9,6 +9,21 @@ standardize_OWRS_names <- function(owrs_file, current_class){
   mask <- names(owrs_file$rate_structure[[current_class]]) == "flat_rate_commodity"
   names(owrs_file$rate_structure[[current_class]])[mask] <- "flat_rate"
   
+  mask <- names(owrs_file$rate_structure[[current_class]]) == "budget_commodity"
+  names(owrs_file$rate_structure[[current_class]])[mask] <- "budget"
+  
+  mask <- names(owrs_file$rate_structure[[current_class]]) == "indoor_commodity"
+  names(owrs_file$rate_structure[[current_class]])[mask] <- "indoor"
+  
+  mask <- names(owrs_file$rate_structure[[current_class]]) == "outdoor_commodity"
+  names(owrs_file$rate_structure[[current_class]])[mask] <- "outdoor"
+  
+  mask <- names(owrs_file$rate_structure[[current_class]]) == "gpcd_commodity"
+  names(owrs_file$rate_structure[[current_class]])[mask] <- "gpcd"
+  
+  mask <- names(owrs_file$rate_structure[[current_class]]) == "landscape_factor_commodity"
+  names(owrs_file$rate_structure[[current_class]])[mask] <- "landscape_factor"
+  
   if(owrs_file$rate_structure[[current_class]]$commodity_charge == "flat_rate_commodity*usage_ccf"){
     owrs_file$rate_structure[[current_class]]$commodity_charge <- "flat_rate*usage_ccf"
   }
