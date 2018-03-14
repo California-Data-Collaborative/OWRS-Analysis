@@ -51,19 +51,19 @@ customer_classes <- c("RESIDENTIAL_SINGLE"
 #End
 
 #import sample data and give the data parameters used in the owrs files that are not in the original data
-df_smc <- santamonica
-names(df_smc) <- c( "cust_id", "usage_ccf", "usage_month", "usage_year",  "cust_class", "usage_date", "cust_class_from-utility")
+# df_smc <- santamonica
+# names(df_smc) <- c( "cust_id", "usage_ccf", "usage_month", "usage_year",  "cust_class", "usage_date", "cust_class_from-utility")
 
-df_sample <- tbl_df(df_smc) %>%
-  mutate(hhsize = 4, meter_size = '3/4"', usage_zone = 1, landscape_area = 2000,
-         et_amount = 2.0, wrap_customer = "No", irr_area = 2000, carw_customer = "No",
-         season = "Winter", tax_exemption = "granted", lot_size_group = 3,
-         temperature_zone = "Medium", pressure_zone = 1, water_font = "city_delivered",
-         area = "inside_city", water_type = "potable", rate_class = "C1",
-         dwelling_units = 10, elevation_zone = 2, greater_than = "False",
-         usage_indoor_budget_ccf = .3, meter_type = "compound", block = 1,
-         tariff_area = 1, turbine_meter = "No", senior = "no") %>%
-  group_by(cust_class)
+# df_sample <- tbl_df(df_smc) %>%
+#   mutate(hhsize = 4, meter_size = '3/4"', usage_zone = 1, landscape_area = 2000,
+#          et_amount = 2.0, wrap_customer = "No", irr_area = 2000, carw_customer = "No",
+#          season = "Winter", tax_exemption = "granted", lot_size_group = 3,
+#          temperature_zone = "Medium", pressure_zone = 1, water_font = "city_delivered",
+#          area = "inside_city", water_type = "potable", rate_class = "C1",
+#          dwelling_units = 10, elevation_zone = 2, greater_than = "False",
+#          usage_indoor_budget_ccf = .3, meter_type = "compound", block = 1,
+#          tariff_area = 1, turbine_meter = "No", senior = "no") %>%
+#   group_by(cust_class)
 
 df_adjustable_sample <- tbl_df(data.frame (usage_month = 7, days_in_period = 31, usage_year=2017,
                                            hhsize = 4, meter_size = '3/4"', usage_zone = 1, landscape_area = 2000,
