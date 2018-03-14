@@ -106,27 +106,6 @@ df_OWRS <- tbl_df(as.data.frame(list("filepath"=getFileNames(owrs_path)), string
 
 df_bill <- calculate_bills_for_all_utilities(df_OWRS, df_sample, owrs_path, customer_classes)
 
-#list of utilities for which the 3/4" key was not found to calculate the rates
-#identified from the errors thrown when running this chunk of code.
-meter_size_58 <- c('Goleta Water District',
-                   'Humboldt Bay Municipal Water District', 
-                   'Mid-Peninsula Water District', 
-                   'North Marin Water District')
-
-df_sample$meter_size <- '5/8"'
-
-df_bill <- rbind(df_bill,
-                 calculate_bills_for_all_utilities(df_OWRS[df_OWRS$utility_name %in% meter_size_58,], 
-                                                   df_sample, owrs_path, customer_classes))
-#same process for the utilities where the smallest meter size is 1 inch.
-meter_size_1in <- c('Humboldt Community Services District')
-
-df_sample$meter_size <- '1"'
-
-df_bill <- rbind(df_bill,
-                 calculate_bills_for_all_utilities(df_OWRS[df_OWRS$utility_name %in% meter_size_1in,], 
-                                                   df_sample, owrs_path, customer_classes))
-
 #Format the Bill Information so that only valid data entries are presented, the decimal points are rounded, and the data is arranged by utility
 df_final_bill <- tbl_df(df_bill) %>% filter(!is.na(bill)) %>%
   mutate(bill = round(as.numeric(bill), 2),

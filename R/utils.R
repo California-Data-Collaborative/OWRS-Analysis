@@ -137,14 +137,26 @@ calculate_bills_for_all_utilities <- function(df_OWRS, df_sample, owrs_path, cus
       for(j in 1:length(customer_classes))
       {
         current_class <- customer_classes[j]
-        
+        owrs_str <- jsonlite::toJSON(owrs_file$rate_structure[[current_class]])
+
+        tmp_sample <- df_sample
+        if(grepl('3/4', owrs_str)){
+          next
+        }else if(grepl('5/8', owrs_str)){
+          tmp_sample <- df_sample
+          tmp_sample$meter_size <- '5/8"'
+        }else{
+          tmp_sample <- df_sample
+          tmp_sample$meter_size <- '1"'
+        }
+          
         df_temp <- tryCatch({
-          singleUtilitySim(df_sample, df_OWRS[i,], owrs_file, current_class)
+          singleUtilitySim(tmp_sample, df_OWRS[i,], owrs_file, current_class)
         },
         error = function(cond){
           #Display Error Message for specific files
           print(i)
-          message(paste("Format error in file:", df_OWRS[i,]$filepath, "\n", cond, "\n"))
+          message(paste("Rate calculation error in file:", df_OWRS[i,]$filepath, "\n", cond, "\n"))
           return(NULL)
         }) 
         
