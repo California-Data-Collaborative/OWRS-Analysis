@@ -323,8 +323,26 @@ supplier_pwsid <- read.csv('data/utilities_for_OWRS.csv', stringsAsFactors=FALSE
 
 # append to df_OWRS the best fuzzy match for utility_name to get pwsid
 # cutoff chosen arbitraily, other values can be tested
-df_OWRS$fuzzy_match <- as.character(sapply(df_OWRS$utility_name, GetCloseMatches,
-                              sequence_strings = supplier_pwsid$Agency_Name, n=1L, cutoff = 0.85))
+df_OWRS$utility_name_supplier_report <- as.character(sapply(df_OWRS$utility_name, GetCloseMatches,
+                                              sequence_strings = supplier_pwsid$Agency_Name, n=1L, cutoff = 0.85))
+
+owrs_to_supplier_report_manual_map <- list(
+  "Big Bear Lake City Of" = "City of Big Bear Lake, Dept of Water & Power",
+  "Calaveras Public Utilities District" = "",
+  "Crescent City" = "Crescent City City of",
+  "Discovery Bay Town Of" = "Discovery Bay Community Services District",
+  "Golden State Water Company - Hawthorne" = "Hawthorne City of",
+  "Golden State Water Company - Lakewood" = "",
+  "Marina Coast Water District - Central Marina" = "Marina Coast Water District",
+  "Marina Coast Water District - Ord Community" = "Marina Coast Water District",
+  "Rio Dell City Of" = "",
+  "San Bernardino County Service Area 64 Spring Valley Lake" = "San Bernardino County Service Area 64",
+  "Sierra Estates Mutual Water Company" = ""
+)
+
+# df_OWRS$utility_name_supplier_report <- ifelse()
+
+
 
 # get pswid
 merged_OWRS <- merge(df_OWRS, supplier_pwsid, by.x = "fuzzy_match", by.y = "Agency_Name", all.x=TRUE, all.y=FALSE)
