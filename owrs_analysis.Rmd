@@ -394,8 +394,8 @@ plot_eff_vs_pctFixed(agg_eff_vs_rate)
 ## Joining Data from the Qualitative Survey
 ```{r, echo=FALSE}
 #read the survey data in
-hd <- read.csv('data/2017 CA-NV Rate Survey.csv', nrows=2, header=FALSE, stringsAsFactors = FALSE)
-quali_survey <- read.csv('data/2017 CA-NV Rate Survey.csv', skip=2, header=FALSE, stringsAsFactors = FALSE)
+hd <- read.csv('data/2017 CA-NV Rate Survey.csv', nrows=2, header=FALSE, stringsAsFactors = FALSE)
+quali_survey <- read.csv('data/2017 CA-NV Rate Survey.csv', skip=2, header=FALSE, stringsAsFactors = FALSE)
 names(quali_survey) <- paste(hd[1,], hd[2,], sep = "#")
 names(quali_survey)[36] <- "costs_pct_fixed"
 names(quali_survey)[37] <- "rev_pct_fixed"
