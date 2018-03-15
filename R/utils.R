@@ -46,10 +46,10 @@ singleUtilitySim <- function(df_sample, df_OWRS_row, owrs_file, current_class){
     bt <- owrs_file$rate_structure[[current_class]]$commodity_charge
   }
   
-  if(is.null(owrs_file$metadata$unit_type)){
-    ut <- "ccf"
+  if(is.null(owrs_file$metadata$bill_unit)){
+    bu <- "ccf"
   }else {
-    ut <- owrs_file$metadata$unit_type
+    bu <- owrs_file$metadata$bill_unit
   }
   
   df_temp <- df_sample %>%
@@ -57,7 +57,7 @@ singleUtilitySim <- function(df_sample, df_OWRS_row, owrs_file, current_class){
            utility_name = df_OWRS_row$utility_name,
            effective_date = df_OWRS_row$effective_date,
            bill_frequency = owrs_file$metadata$bill_frequency,
-           unit_type = ut,
+           bill_unit = bu,
            bill_type = as.character(bt))
   
   isBimonthly <- length(grep("[Bb][Ii]", df_temp$bill_frequency[1]))
@@ -74,6 +74,12 @@ singleUtilitySim <- function(df_sample, df_OWRS_row, owrs_file, current_class){
     df_temp$et_amount <- 12*df_temp$et_amount
   }
   
+  # Convert units before calculating bills
+  if(bu == "kgal"){
+    df_temp$usage_ccf <- 0.748*df_temp$usage_ccf
+  }
+  
+  
   #cal bill and validate service charge and commodity charge
   df_temp <- calculate_bill(df_temp, owrs_file)
   df_temp <- hasServiceCharge(df_temp)
@@ -83,15 +89,19 @@ singleUtilitySim <- function(df_sample, df_OWRS_row, owrs_file, current_class){
   # df_temp <- data.frame(utility, df_NA)
   # df_bill <- rbind(df_bill, df_temp)
   
+  # convert back to ccf for filtering and comparison in charts
+  if(bu == "kgal"){
+    df_temp$usage_ccf <- round(df_temp$usage_ccf/0.748)
+  }
   
   # divide bill by two for comparison to monthly customers 
   if(isBimonthly){
-    df_temp$usage_ccf <- df_temp$usage_ccf/2
+    df_temp$usage_ccf <- round(df_temp$usage_ccf/2)
     df_temp$service_charge <- df_temp$service_charge/2.0
     df_temp$commodity_charge <- df_temp$commodity_charge/2.0
     df_temp$bill <- df_temp$bill/2.0
   }else if(isAnnual){
-    df_temp$usage_ccf <- df_temp$usage_ccf/12
+    df_temp$usage_ccf <- round(df_temp$usage_ccf/12)
     df_temp$service_charge <- df_temp$service_charge/12.0
     df_temp$commodity_charge <- df_temp$commodity_charge/12.0
     df_temp$bill <- df_temp$bill/12.0

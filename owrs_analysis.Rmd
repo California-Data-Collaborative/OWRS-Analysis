@@ -116,13 +116,10 @@ df_final_bill <- tbl_df(df_bill) %>% filter(!is.na(bill)) %>%
          commodity_charge = round(as.numeric(commodity_charge), 2),
          service_charge = round(service_charge, 2),
          utility_name = as.character(utility_name),
-         bill_frequency = as.character(bill_frequency),
-         usage_ccf = ifelse(unit_type=="kgal", 1.33681*usage_ccf, usage_ccf)) %>% 
+         bill_frequency = as.character(bill_frequency)) %>% 
   arrange(utility_name)
 #End
 
-#getting rid of the annually charged bills until we fix the bill calculator
-df_final_bill <- df_final_bill[which(df_final_bill$bill_frequency != "Annually"),]
 ```
 
 ```{r, echo=FALSE}
@@ -299,8 +296,7 @@ plot_bill_histogram(df_final_bill, singleTargetValue)
 #          commodity_charge = round(as.numeric(commodity_charge), 2),
 #          service_charge = round(service_charge, 2),
 #          utility_name = as.character(utility_name),
-#          bill_frequency = as.character(bill_frequency),
-#          usage_ccf = ifelse(unit_type=="kgal", 1.33681*usage_ccf, usage_ccf)) %>%
+#          bill_frequency = as.character(bill_frequency)) %>%
 #   filter(as.Date(reference_date) >= as.Date(effective_date) ) %>% 
 #   group_by(utility_name, reference_date) %>%
 #   filter(as.Date(effective_date) == max(as.Date(effective_date) )) %>%
