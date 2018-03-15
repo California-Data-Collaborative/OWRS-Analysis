@@ -327,25 +327,29 @@ df_OWRS$utility_name_supplier_report <- as.character(sapply(df_OWRS$utility_name
                                               sequence_strings = supplier_pwsid$Agency_Name, n=1L, cutoff = 0.85))
 
 owrs_to_supplier_report_manual_map <- list(
-  "Big Bear Lake City Of" = "City of Big Bear Lake, Dept of Water & Power",
+  "Big Bear Lake  City Of" = "City of Big Bear Lake, Dept of Water & Power",
   "Calaveras Public Utilities District" = "",
   "Crescent City" = "Crescent City City of",
-  "Discovery Bay Town Of" = "Discovery Bay Community Services District",
+  "Discovery Bay  Town Of" = "Discovery Bay Community Services District",
   "Golden State Water Company - Hawthorne" = "Hawthorne City of",
   "Golden State Water Company - Lakewood" = "",
   "Marina Coast Water District - Central Marina" = "Marina Coast Water District",
   "Marina Coast Water District - Ord Community" = "Marina Coast Water District",
-  "Rio Dell City Of" = "",
+  "Rio Dell  City Of" = "",
   "San Bernardino County Service Area 64 Spring Valley Lake" = "San Bernardino County Service Area 64",
   "Sierra Estates Mutual Water Company" = ""
 )
 
-# df_OWRS$utility_name_supplier_report <- ifelse()
+manually_mapped_names <- as.character(owrs_to_supplier_report_manual_map[df_OWRS$utility_name])
+df_OWRS$utility_name_supplier_report <- ifelse(manually_mapped_names == "NULL", 
+                                               df_OWRS$utility_name_supplier_report,
+                                               manually_mapped_names)
 
 
 
 # get pswid
-merged_OWRS <- merge(df_OWRS, supplier_pwsid, by.x = "fuzzy_match", by.y = "Agency_Name", all.x=TRUE, all.y=FALSE)
+merged_OWRS <- merge(df_OWRS, supplier_pwsid, by.x = "utility_name_supplier_report", by.y = "Agency_Name", 
+                     all.x=TRUE, all.y=FALSE)
 # merge with suplier report
 merged_OWRS <- merge(merged_OWRS, supplier_reports, by.x = "PWSID", by.y = "report_pwsid", all.x=TRUE, all.y=FALSE)
 ```
