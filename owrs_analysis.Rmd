@@ -100,8 +100,12 @@ df_OWRS <- tbl_df(as.data.frame(list("filepath"=getFileNames(owrs_path)), string
                       map(gsub, pattern="\\D", replacement="") %>%
                       map(as.numeric)) %>%
   
-  mutate(effective_date = sapply(filename, extract_date) ) %>% 
+  mutate(effective_date = as.Date(sapply(filename, extract_date)) ) %>% 
   mutate(utility_name = sapply(as.character(owrs_directory), extract_utility_name) )
+
+df_OWRS <- df_OWRS %>% group_by(utility_name) %>% 
+  arrange(desc(effective_date)) %>% 
+  filter(row_number()==1)
 
 
 df_bill <- calculate_bills_for_all_utilities(df_OWRS, df_sample, owrs_path, customer_classes)
