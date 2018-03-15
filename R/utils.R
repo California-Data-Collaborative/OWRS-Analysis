@@ -61,12 +61,17 @@ singleUtilitySim <- function(df_sample, df_OWRS_row, owrs_file, current_class){
            bill_type = as.character(bt))
   
   isBimonthly <- length(grep("[Bb][Ii]", df_temp$bill_frequency[1]))
+  isAnnual <- length(grep("[Aa][nn]", df_temp$bill_frequency[1]))
   
   # double usage for bimonthly customers
   if(isBimonthly==TRUE){
     df_temp$usage_ccf <- 2*df_temp$usage_ccf
     df_temp$days_in_period <- 2*df_temp$days_in_period
     df_temp$et_amount <- 2*df_temp$et_amount
+  }else if(isAnnual){
+    df_temp$usage_ccf <- 12*df_temp$usage_ccf
+    df_temp$days_in_period <- 12*df_temp$days_in_period
+    df_temp$et_amount <- 12*df_temp$et_amount
   }
   
   #cal bill and validate service charge and commodity charge
@@ -85,6 +90,11 @@ singleUtilitySim <- function(df_sample, df_OWRS_row, owrs_file, current_class){
     df_temp$service_charge <- df_temp$service_charge/2.0
     df_temp$commodity_charge <- df_temp$commodity_charge/2.0
     df_temp$bill <- df_temp$bill/2.0
+  }else if(isAnnual){
+    df_temp$usage_ccf <- df_temp$usage_ccf/12
+    df_temp$service_charge <- df_temp$service_charge/12.0
+    df_temp$commodity_charge <- df_temp$commodity_charge/12.0
+    df_temp$bill <- df_temp$bill/12.0
   }
   
   # calculate percent of bill that comes from fixed charges
