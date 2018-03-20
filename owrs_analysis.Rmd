@@ -381,10 +381,31 @@ plot_gpcd_ts(merged_OWRS)
 ```
 ## Compare Rates and efficiency
 ```{r, echo=FALSE}
-df_final_bill$fuzzy_match <- as.character(sapply(df_final_bill$utility_name, GetCloseMatches,
-                              sequence_strings = supplier_pwsid$Agency_Name, n=1L, cutoff = 0.85))
+df_final_bill$utility_name_supplier_report <- as.character(sapply(df_final_bill$utility_name, GetCloseMatches,
+                                                sequence_strings = supplier_pwsid$Agency_Name, n=1L, cutoff = 0.85))
 
-df_final_bill <- merge(df_final_bill, supplier_pwsid, by.x = "fuzzy_match", by.y = "Agency_Name", all.x=TRUE, all.y=FALSE)
+owrs_to_supplier_report_manual_map <- list(
+  "Big Bear Lake  City Of" = "City of Big Bear Lake, Dept of Water & Power",
+  "Calaveras Public Utilities District" = "",
+  "Crescent City" = "Crescent City City of",
+  "Discovery Bay  Town Of" = "Discovery Bay Community Services District",
+  "Golden State Water Company - Hawthorne" = "Hawthorne City of",
+  "Golden State Water Company - Lakewood" = "",
+  "Marina Coast Water District - Central Marina" = "Marina Coast Water District",
+  "Marina Coast Water District - Ord Community" = "Marina Coast Water District",
+  "Rio Dell  City Of" = "",
+  "San Bernardino County Service Area 64 Spring Valley Lake" = "San Bernardino County Service Area 64",
+  "Sierra Estates Mutual Water Company" = ""
+)
+
+manually_mapped_names <- as.character(owrs_to_supplier_report_manual_map[df_final_bill$utility_name])
+df_final_bill$utility_name_supplier_report <- ifelse(manually_mapped_names == "NULL", 
+                                               df_final_bill$utility_name_supplier_report,
+                                               manually_mapped_names)
+
+
+
+df_final_bill <- merge(df_final_bill, supplier_pwsid, by.x = "utility_name_supplier_report", by.y = "Agency_Name", all.x=TRUE, all.y=FALSE)
 
 
 #merge on PWSID, month and Year
@@ -400,15 +421,13 @@ agg_eff_vs_rate <- eff_vs_rate[c("PWSID", "usage_month", "usage_year",
                                  "bill", "pct_above_target")] %>% na.omit() %>%
                         group_by(PWSID) %>% summarise_all(funs(mean))
 
+agg_eff_vs_rate <- eff_vs_rate %>% filter(usage_ccf == singleTargetValue) 
+
 plot_eff_vs_bill(agg_eff_vs_rate)
 ```
 
 Scatter plot of Efficiency vs Rates Structure (% Fixed  - for 15 CCF)
 ```{r, echo=FALSE}
-
-agg_eff_vs_rate <- eff_vs_rate[c("PWSID", "usage_month", "usage_year",
-                                 "pct_above_target", "percentFixed")] %>% na.omit() %>%
-                        group_by(PWSID) %>% summarise_all(funs(mean))
 
 plot_eff_vs_pctFixed(agg_eff_vs_rate)
 ```
@@ -416,8 +435,8 @@ plot_eff_vs_pctFixed(agg_eff_vs_rate)
 ## Joining Data from the Qualitative Survey
 ```{r, echo=FALSE}
 #read the survey data in
-hd <- read.csv('data/2017 CA-NV Rate Survey.csv', nrows=2, header=FALSE, stringsAsFactors = FALSE)
-quali_survey <- read.csv('data/2017 CA-NV Rate Survey.csv', skip=2, header=FALSE, stringsAsFactors = FALSE)
+hd <- read.csv('data/2017 CA-NV Rate Survey.csv', nrows=2, header=FALSE, stringsAsFactors = FALSE)
+quali_survey <- read.csv('data/2017 CA-NV Rate Survey.csv', skip=2, header=FALSE, stringsAsFactors = FALSE)
 names(quali_survey) <- paste(hd[1,], hd[2,], sep = "#")
 names(quali_survey)[36] <- "costs_pct_fixed"
 names(quali_survey)[37] <- "rev_pct_fixed"
@@ -446,11 +465,7 @@ pct_rev
 ```{r}
 quali_survey$fixedRev_per_fixedCosts <- quali_survey$rev_pct_fixed / quali_survey$costs_pct_fixed
 
-ggplot(quali_survey, aes(fixedRev_per_fixedCosts)) + geom_histogram(binwidth = 0.5)
+ggplot(quali_survey, aes(x=costs_pct_fixed, y=rev_pct_fixed)) + geom_point()
 ```
-```{r}
 
-
-
-```
 
