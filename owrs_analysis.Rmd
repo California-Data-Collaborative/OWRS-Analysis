@@ -1,8 +1,9 @@
 ---
 title: "California Water Rate Survey Results 2017"
 output:
+  pdf_document: default
   html_document:
-    keep_md: true
+    keep_md: yes
 ---
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
@@ -50,20 +51,6 @@ customer_classes <- c("RESIDENTIAL_SINGLE"
 )
 #End
 
-#import sample data and give the data parameters used in the owrs files that are not in the original data
-# df_smc <- santamonica
-# names(df_smc) <- c( "cust_id", "usage_ccf", "usage_month", "usage_year",  "cust_class", "usage_date", "cust_class_from-utility")
-
-# df_sample <- tbl_df(df_smc) %>%
-#   mutate(hhsize = 4, meter_size = '3/4"', usage_zone = 1, landscape_area = 2000,
-#          et_amount = 2.0, wrap_customer = "No", irr_area = 2000, carw_customer = "No",
-#          season = "Winter", tax_exemption = "granted", lot_size_group = 3,
-#          temperature_zone = "Medium", pressure_zone = 1, water_font = "city_delivered",
-#          area = "inside_city", water_type = "potable", rate_class = "C1",
-#          dwelling_units = 10, elevation_zone = 2, greater_than = "False",
-#          usage_indoor_budget_ccf = .3, meter_type = "compound", block = 1,
-#          tariff_area = 1, turbine_meter = "No", senior = "no") %>%
-#   group_by(cust_class)
 
 df_adjustable_sample <- tbl_df(data.frame (usage_month = 7, days_in_period = 31, usage_year=2017,
                                            hhsize = 4, meter_size = '3/4"', usage_zone = 1, landscape_area = 2000,
@@ -183,7 +170,7 @@ plot_bill_frequency_piechart(df_final_bill)
 bill_freq_cap <- fig_nums(name='bill_frequency_piechart', caption= 'Bill Frequency Pie Chart. About three quarters of the water agencies use a monthly billing system.')
 ```
 
-```{r mean_bill_pie, echo=FALSE, fig.cap = mean_bill_pie_cap}
+```{r mean_bill_by_parts_pie, echo=FALSE, fig.cap = mean_bill_pie_cap}
 plot_mean_bill_pie(df_final_bill, singleTargetValue)
 
 mean_bill_pie_cap <- fig_nums(name='mean_bill_pie', caption= 'Average bill by parts for all agencies, considering a consumption of 10 CCF in a month. The average total bill is $60.68. With an average service charge (fixed) of $24.63 (40.6%) and an average commodity charge (variable) of $35.61 (58.7%).')
@@ -191,13 +178,13 @@ mean_bill_pie_cap <- fig_nums(name='mean_bill_pie', caption= 'Average bill by pa
 
 
 
-```{r rate_type_pie, echo=FALSE}
+```{r rate_structure_type_pie, echo=FALSE}
 plot_rate_type_pie(df_final_bill)
 
 
 ```
 
-```{r commodity_charge_vs_usage, echo=FALSE}
+```{r commodity_charge_vs_usage_line, echo=FALSE}
 
 plot_commodity_charges_vs_usage(df_final_bill, start, end, interval)
 ```
@@ -206,7 +193,7 @@ plot_commodity_charges_vs_usage(df_final_bill, start, end, interval)
 # plot_bills_vs_usage(df_final_bill, start, end, interval)
 ```
 
-```{r, echo=FALSE}
+```{r commodity_charge_vs_usage_boxplot, echo=FALSE}
 
 # png(filename='plots/boxplot_bills.png',  width = 700, height = 432, units = "px")
 # plot(boxplot_bills_vs_usage(df_final_bill, start, end, interval))
@@ -218,96 +205,22 @@ boxplot_bills_vs_usage(df_final_bill, start, end, interval)
 
 
 
-```{r, echo=FALSE}
+```{r service_charge_ratio_histogram, echo=FALSE}
 # meanpercentFixed <- round(mean(as.numeric(df_final_bill$percentFixed[df_final_bill$usage_ccf == singleTargetValue])), 3)
 
 
 plot_ratio_histogram(df_final_bill, singleTargetValue)
 ```
 
-```{r, echo=FALSE}
+```{r total_bill_histogram, echo=FALSE}
 plot_bill_histogram(df_final_bill, singleTargetValue)
 ```
 
 # Rates x Efficiency
 ## Define Period of Analysis
-```{r, echo=FALSE}
-# startmonth <- 1
-# startyear <- 2017
-# endmonth <- 12
-# endyear <- 2017
-# 
-# startdate <- as.Date(paste('01', as.character(startmonth), as.character(startyear)), "%d %m %Y")
-# enddate <- as.Date(paste('01', as.character(endmonth), as.character(endyear)), "%d %m %Y")
-# reference_period <- seq.Date(startdate, enddate, by="month")
-
-```
-## Calculate Rates
-```{r, echo=FALSE}
-# # Rates time series
-# 
-# df_usage <- as.data.frame(list("usage_ccf"=15, "cust_class"="RESIDENTIAL_SINGLE"))
-# 
-# # df_adjustable_sample <- tbl_df(data.frame (reference_date = reference_period,
-# #                                            usage_month = month(reference_period),
-# #                                            usage_year = year(reference_period),
-# #                                            days_in_period = days_in_month(reference_period),
-# #                                            hhsize = 4, meter_size = '3/4"', usage_zone = 1, landscape_area = 2000,
-# #                                            et_amount = 7.0, wrap_customer = "No", irr_area = 2000,
-# #                                            carw_customer = "No", season = "Winter", tax_exemption = "granted",
-# #                                            lot_size_group = 3, temperature_zone = "Medium", pressure_zone = 1,
-# #                                            water_font = "city_delivered", city_limits = "inside_city",
-# #                                            water_type = "potable", rate_class = "C1", dwelling_units = 10,
-# #                                            elevation_zone = 2, greater_than = "False", usage_indoor_budget_ccf = .3,
-# #                                            meter_type = "Turbine", block = 1, tariff_area = 1, turbine_meter = "No",
-# #                                            senior = "no", cust_class = customer_classes[1]))
-# 
-# df_adjustable_sample$reference_date <- as.Date("2017-06-01")
-# 
-# df_sample <-  left_join(df_usage, df_adjustable_sample, by="cust_class")
-# 
-# df_bill <- calculate_bills_for_all_utilities(df_OWRS, df_sample, owrs_path, customer_classes)
-# 
-# #list of utilities for which the 3/4" key was not found to calculate the rates
-# #identified from the errors thrown when running this chunk of code.
-# meter_size_58 <- c('Goleta Water District',
-#                    'Humboldt Bay Municipal Water District', 
-#                    'Mid-Peninsula Water District', 
-#                    'North Marin Water District')
-# 
-# df_sample$meter_size <- '5/8"'
-# 
-# df_bill <- rbind(df_bill,
-#                  calculate_bills_for_all_utilities(df_OWRS[df_OWRS$utility_name %in% meter_size_58,], 
-#                                                    df_sample, owrs_path, customer_classes))
-# #same process for the utilities where the smallest meter size is 1 inch.
-# meter_size_1in <- c('Humboldt Community Services District')
-# 
-# df_sample$meter_size <- '1"'
-# 
-# df_bill <- rbind(df_bill,
-#                  calculate_bills_for_all_utilities(df_OWRS[df_OWRS$utility_name %in% meter_size_1in,], 
-#                                                    df_sample, owrs_path, customer_classes))
-# 
-# #Format the Bill Information so that only valid data entries are presented, 
-# #the decimal points are rounded, and the data is arranged by utility
-# df_final_bill <- tbl_df(df_bill) %>% filter(!is.na(bill)) %>%
-#   mutate(bill = round(as.numeric(bill), 2),
-#          commodity_charge = round(as.numeric(commodity_charge), 2),
-#          service_charge = round(service_charge, 2),
-#          utility_name = as.character(utility_name),
-#          bill_frequency = as.character(bill_frequency)) %>%
-#   filter(as.Date(reference_date) >= as.Date(effective_date) ) %>% 
-#   group_by(utility_name, reference_date) %>%
-#   filter(as.Date(effective_date) == max(as.Date(effective_date) )) %>%
-#   arrange(utility_name)
-# 
-# #getting rid of the annually charged bills until we fix the bill calculator
-# df_final_bill <- df_final_bill[which(df_final_bill$bill_frequency != "Annually"),]
-```
 Average water rates history:
-```{r, echo=FALSE}
-# plot_avg_price_history(df_final_bill)
+```{r, echo=FALSE, warning=FALSE}
+#plot_avg_price_history(df_final_bill)
 ```
 
 
@@ -352,9 +265,7 @@ merged_OWRS <- merge(df_OWRS, supplier_pwsid, by.x = "utility_name_supplier_repo
                      all.x=TRUE, all.y=FALSE)
 # merge with suplier report
 merged_OWRS <- merge(merged_OWRS, supplier_reports, by.x = "PWSID", by.y = "report_pwsid", all.x=TRUE, all.y=FALSE)
-```
-Calculate Efficiency from the suppliers reports
-```{r, echo=FALSE}
+
 #The standard value for GPCD is assumed 55
 target_gpcd <- 55
 ET_adj_factor <- 0.8
@@ -371,12 +282,13 @@ merged_OWRS$report_monthyear <- as.Date(paste('01', as.character(merged_OWRS$rep
                                               as.character(merged_OWRS$report_year)), "%d %m %Y")
 ```
 
-```{r, echo=FALSE}
+
+```{r efficiency_goal_time_series_boxplot, echo=FALSE, warning=FALSE}
 plot_efficiency_ts(merged_OWRS)
 
 ```
 
-```{r, echo=FALSE}
+```{r gpcd_time_series_boxplot, echo=FALSE, warning=FALSE}
 plot_gpcd_ts(merged_OWRS)
 ```
 ## Compare Rates and efficiency
@@ -416,21 +328,11 @@ eff_vs_rate <- merge(df_final_bill, merged_OWRS,
 ```
 
 Scatter plot of Efficiency (pct_above_target) vs Rates (Total Bill for 15 CCF)
-```{r, echo=FALSE}
-agg_eff_vs_rate <- eff_vs_rate[c("PWSID", "usage_month", "usage_year",
-                                 "bill", "pct_above_target")] %>% na.omit() %>%
-                        group_by(PWSID) %>% summarise_all(funs(mean))
-
-agg_eff_vs_rate <- eff_vs_rate %>% filter(usage_ccf == singleTargetValue) 
-
-plot_eff_vs_bill(agg_eff_vs_rate)
+```{r efficiency_goal_vs_total_bill_scatter_trend, echo=FALSE, warning=FALSE}
+plot_eff_vs_bill(eff_vs_rate, singleTargetValue)
 ```
 
-Scatter plot of Efficiency vs Rates Structure (% Fixed  - for 15 CCF)
-```{r, echo=FALSE}
 
-plot_eff_vs_pctFixed(agg_eff_vs_rate)
-```
 
 ## Joining Data from the Qualitative Survey
 ```{r, echo=FALSE}
@@ -448,7 +350,17 @@ quali_survey$costs_pct_fixed <- as.numeric(quali_survey$costs_pct_fixed)
 quali_survey$rev_pct_fixed <- as.numeric(quali_survey$rev_pct_fixed)
 
 ```
-```{r}
+
+Scatter plot of Efficiency vs Rates Structure (% Fixed  - for 15 CCF)
+```{r efficiency_goal_vs_percent_fixed_scatter_trend, echo=FALSE, warning=FALSE}
+agg_eff_vs_rate <- eff_vs_rate[c("PWSID", "usage_month", "usage_year",
+                                 "bill", "pct_above_target")] %>% na.omit() %>%
+                        group_by(PWSID) %>% summarise_all(funs(mean))
+
+plot_eff_vs_pctFixed(eff_vs_rate %>% filter(usage_ccf == singleTargetValue))
+```
+
+```{r fixed_cost_percentage_histogram, echo=FALSE, warning=FALSE}
 pct_costs <- ggplot(quali_survey, aes(costs_pct_fixed)) + geom_histogram(bins = 10)
 
 pct_costs
@@ -456,13 +368,13 @@ pct_costs
 
 
 
-```{r}
+```{r fixed_revenue_percentage_histogram, echo=FALSE, warning=FALSE}
 pct_rev <- ggplot(quali_survey, aes(rev_pct_fixed)) + geom_histogram(bins = 10)
 
 pct_rev
 ```
 
-```{r}
+```{r fixed_costs_vs_fixed_rev_scatter, echo=FALSE, warning=FALSE}
 quali_survey$fixedRev_per_fixedCosts <- quali_survey$rev_pct_fixed / quali_survey$costs_pct_fixed
 
 ggplot(quali_survey, aes(x=costs_pct_fixed, y=rev_pct_fixed)) + geom_point()

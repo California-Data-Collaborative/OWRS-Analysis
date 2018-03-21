@@ -218,13 +218,15 @@ plot_gpcd_ts <- function(df){
   gpcd_ts
 }
 
-plot_eff_vs_bill <- function(df){
+plot_eff_vs_bill <- function(df, target_ccf){
+  
+  df <- df %>% filter(usage_ccf == target_ccf) 
   
   eff_vs_bill <- ggplot(df, 
                         aes(x=bill, y=pct_above_target)) +
     geom_point(shape=1) +
-    labs(x = "Total Bill (Dollars)", y = "Percentage Above Target") +
-    ggtitle("Efficiency vs Total bill")+
+    labs(x = "Total Bill (Dollars)", y = "Efficiency Ratio (Use/Goal)") +
+    ggtitle( paste("Efficiency vs Total Bill at ", target_ccf, "CCF") )+
     theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 25),
           legend.position = "none")+
     geom_smooth(method='lm')

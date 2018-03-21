@@ -1,4 +1,9 @@
-# California Water Rate Survey Results 2017
+---
+title: "California Water Rate Survey Results 2017"
+output:
+  html_document:
+    keep_md: true
+---
 
 
 
@@ -23,6 +28,9 @@ This report provides the combined analysis of data from 4 different sources:
 
 
 
+
+
+
 # Summary Statistics
 
 This section discusses general characteristics of the rates for utilities analyzed in this survey.
@@ -31,89 +39,27 @@ This section discusses general characteristics of the rates for utilities analyz
 
 ![Figure  1: Bill Frequency Pie Chart. About three quarters of the water agencies use a monthly billing system.](owrs_analysis_files/figure-html/bill_frequency_pie-1.png)
 
-![Figure  2: Average bill by parts for all agencies, considering a consumption of 10 CCF in a month. The average total bill is $60.68. With an average service charge (fixed) of $24.63 (40.6%) and an average commodity charge (variable) of $35.61 (58.7%).](owrs_analysis_files/figure-html/mean_bill_pie-1.png)
+![Figure  2: Average bill by parts for all agencies, considering a consumption of 10 CCF in a month. The average total bill is $60.68. With an average service charge (fixed) of $24.63 (40.6%) and an average commodity charge (variable) of $35.61 (58.7%).](owrs_analysis_files/figure-html/mean_bill_by_parts_pie-1.png)
 
 
 
-![](owrs_analysis_files/figure-html/rate_type_pie-1.png)<!-- -->
+![](owrs_analysis_files/figure-html/rate_structure_type_pie-1.png)<!-- -->
 
-![](owrs_analysis_files/figure-html/commodity_charge_vs_usage-1.png)<!-- -->
-
-
-
-![](owrs_analysis_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+![](owrs_analysis_files/figure-html/commodity_charge_vs_usage_line-1.png)<!-- -->
 
 
 
+![](owrs_analysis_files/figure-html/commodity_charge_vs_usage_boxplot-1.png)<!-- -->
 
-![](owrs_analysis_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
 
-![](owrs_analysis_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+
+
+![](owrs_analysis_files/figure-html/service_charge_ratio_histogram-1.png)<!-- -->
+
+![](owrs_analysis_files/figure-html/total_bill_histogram-1.png)<!-- -->
 
 # Rates x Efficiency
 ## Define Period of Analysis
-
-## Calculate Rates
-
-```
-## [1] 81
-```
-
-```
-## Format error in file: Goleta Water District - 1215/04-01-2017.owrs 
-##  Error in value[[3L]](cond): The following map keys are missing from the OWRS file: (3/4")
-## 
-```
-
-```
-## [1] 85
-```
-
-```
-## Format error in file: Humboldt Bay Municipal Water District - 1370/07-01-2017.owrs 
-##  Error in value[[3L]](cond): The following map keys are missing from the OWRS file: (3/4")
-## 
-```
-
-```
-## [1] 86
-```
-
-```
-## Format error in file: Humboldt Community Services District - 1371/08-01-2017.owrs 
-##  Error in value[[3L]](cond): The following map keys are missing from the OWRS file: (3/4")
-## 
-```
-
-```
-## [1] 110
-```
-
-```
-## Format error in file: Mid-Peninsula Water District - 1827/07-01-2017.owrs 
-##  Error in value[[3L]](cond): The following map keys are missing from the OWRS file: (3/4")
-## 
-```
-
-```
-## [1] 118
-```
-
-```
-## Format error in file: North Marin Water District - 1996/06-01-2017.owrs 
-##  Error in value[[3L]](cond): The following map keys are missing from the OWRS file: (3/4")
-## 
-```
-
-```
-## [1] 179
-```
-
-```
-## Format error in file: Western Municipal Water District - 3150/01-01-2018.owrs 
-##  Error in value[[3L]](cond): argument is of length zero
-## 
-```
 Average water rates history:
 
 
@@ -121,30 +67,18 @@ Average water rates history:
 ## Calculate Efficiency
 Load suppliers report info and join with the Utilities list from the OWRS files
 
-Calculate Efficiency from the suppliers reports
 
 
+![](owrs_analysis_files/figure-html/efficiency_goal_time_series_boxplot-1.png)<!-- -->
 
-```
-## Warning: Removed 39 rows containing non-finite values (stat_boxplot).
-```
-
-![](owrs_analysis_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
-
-
-```
-## Warning: Removed 39 rows containing non-finite values (stat_boxplot).
-```
-
-![](owrs_analysis_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
+![](owrs_analysis_files/figure-html/gpcd_time_series_boxplot-1.png)<!-- -->
 ## Compare Rates and efficiency
 
 
 Scatter plot of Efficiency (pct_above_target) vs Rates (Total Bill for 15 CCF)
-![](owrs_analysis_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
+![](owrs_analysis_files/figure-html/efficiency_goal_vs_total_bill_scatter_trend-1.png)<!-- -->
 
-Scatter plot of Efficiency vs Rates Structure (% Fixed  - for 15 CCF)
-![](owrs_analysis_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
+
 
 ## Joining Data from the Qualitative Survey
 
@@ -154,44 +88,15 @@ Scatter plot of Efficiency vs Rates Structure (% Fixed  - for 15 CCF)
 ## Warning: NAs introduced by coercion
 ```
 
-```r
-pct_costs <- ggplot(quali_survey, aes(costs_pct_fixed)) + geom_histogram(bins = 10)
+Scatter plot of Efficiency vs Rates Structure (% Fixed  - for 15 CCF)
+![](owrs_analysis_files/figure-html/efficiency_goal_vs_percent_fixed_scatter_trend-1.png)<!-- -->
 
-pct_costs
-```
-
-```
-## Warning: Removed 87 rows containing non-finite values (stat_bin).
-```
-
-![](owrs_analysis_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
+![](owrs_analysis_files/figure-html/fixed_cost_percentage_histogram-1.png)<!-- -->
 
 
 
+![](owrs_analysis_files/figure-html/fixed_revenue_percentage_histogram-1.png)<!-- -->
 
-```r
-pct_rev <- ggplot(quali_survey, aes(rev_pct_fixed)) + geom_histogram(bins = 10)
-
-pct_rev
-```
-
-```
-## Warning: Removed 83 rows containing non-finite values (stat_bin).
-```
-
-![](owrs_analysis_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
-
-
-```r
-quali_survey$fixedRev_per_fixedCosts <- quali_survey$rev_pct_fixed / quali_survey$costs_pct_fixed
-
-ggplot(quali_survey, aes(fixedRev_per_fixedCosts)) + geom_histogram(binwidth = 0.5)
-```
-
-```
-## Warning: Removed 87 rows containing non-finite values (stat_bin).
-```
-
-![](owrs_analysis_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
+![](owrs_analysis_files/figure-html/fixed_costs_vs_fixed_rev_scatter-1.png)<!-- -->
 
 
