@@ -1,9 +1,9 @@
 ---
 title: "California Water Rate Survey Results 2017"
 output:
-  pdf_document: default
   html_document:
     keep_md: yes
+  pdf_document: default
 ---
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
@@ -17,6 +17,8 @@ library(purrr)
 library(fuzzywuzzyR)
 library(lubridate)
 library(captioner)
+library(png)
+library(grid)
 ```
 
 # Introduction
@@ -39,6 +41,7 @@ This report provides the combined analysis of data from 4 different sources:
 ```{r, include=FALSE}
 source("R/utils.R")
 source("R/plots.R")
+source("R/fuzzy_matching.R")
 
 #starting function to create Figure captions
 fig_nums <- captioner(prefix = "Figure")
@@ -94,139 +97,7 @@ df_OWRS <- df_OWRS %>% group_by(utility_name) %>%
   arrange(desc(effective_date)) %>% 
   filter(row_number()==1)
 
-
-df_bill <- calculate_bills_for_all_utilities(df_OWRS, df_sample, owrs_path, customer_classes)
-
-#Format the Bill Information so that only valid data entries are presented, the decimal points are rounded, and the data is arranged by utility
-df_final_bill <- tbl_df(df_bill) %>% filter(!is.na(bill)) %>%
-  mutate(bill = round(as.numeric(bill), 2),
-         commodity_charge = round(as.numeric(commodity_charge), 2),
-         service_charge = round(service_charge, 2),
-         utility_name = as.character(utility_name),
-         bill_frequency = as.character(bill_frequency)) %>% 
-  arrange(utility_name)
-#End
-
-```
-
-```{r, echo=FALSE}
-
-# #generating csv with rates for merge with demographics
-# 
-# #getting rid of the more recent years
-# df_final_bill$effective_date <- as.Date(df_final_bill$effective_date)        #convert effective_date to Date
-# df_final_bill <- df_final_bill[year(df_final_bill$effective_date) < 2018,]   # drop years >= 2018
-# 
-# #getting rid of duplicates
-# #making sure to keep the most recent values
-# df_final_bill <- df_final_bill[rev(order(df_final_bill$utility_name, df_final_bill$effective_date)),]
-# #drop duplicates
-# df_final_bill <- df_final_bill[ !duplicated(df_final_bill$utility_name), ]
-# df_final_bill <- df_final_bill[order(df_final_bill$utility_name),] #reorder alphabetically
-# 
-# #adding pwsid
-# supplier_pwsid <- read.csv('data/utilities_for_OWRS.csv', stringsAsFactors=FALSE)
-# df_final_bill$fuzzy_match <- as.character(sapply(df_final_bill$utility_name, GetCloseMatches,
-#                               sequence_strings = supplier_pwsid$Agency_Name, n=1L, cutoff = 0.85))
-# df_final_bill <- merge(df_final_bill, supplier_pwsid, by.x = "fuzzy_match", by.y = "Agency_Name", all.x=TRUE, all.y=FALSE)
-# 
-# #write csv with the df_final_bill data frame
-# df_final_bill$utility_id <- as.character(df_final_bill$utility_id)
-# write.csv(df_final_bill, "data/bill_15ccf_residential.csv")
-
-```
-
-
-```{r, echo=FALSE, message=FALSE}
-#library(rgdal)
-
-#shape <- readOGR(dsn = "../Shapefiles", layer = "service_areas_cadc_with_utility_id")
-#shape <- merge(shape, df_final_bill, by = "utility_id")
-
-#setwd("../../Dropbox/CSV/")
-#Output The Final Bill information to a  shapefile
-#writeOGR(shape, ".", "service_areas_cadc_with_billing_info", driver="ESRI Shapefile", overwrite_layer = TRUE)
-#End
-#zipDemFiles <- list.files(recursive = TRUE)
-#setwd("../")
-#zip(zipfile = "../Dropbox/CSV/shapefileZip", files = paste("TempShapeFiles", zipDemFiles, sep = "/"))
-
-#setwd("../../Documents/WaterRateTester/")
-```
-
-# Summary Statistics
-
-This section discusses general characteristics of the rates for utilities analyzed in this survey.
-
-```{r, echo=FALSE}
-#The usage_ccf to evaluate for the histograms and bar chart
-singleTargetValue <- 15;
-
-```
-
-```{r bill_frequency_pie, echo=FALSE, fig.cap = bill_freq_cap}
-plot_bill_frequency_piechart(df_final_bill)
-
-bill_freq_cap <- fig_nums(name='bill_frequency_piechart', caption= 'Bill Frequency Pie Chart. About three quarters of the water agencies use a monthly billing system.')
-```
-
-```{r mean_bill_by_parts_pie, echo=FALSE, fig.cap = mean_bill_pie_cap}
-plot_mean_bill_pie(df_final_bill, singleTargetValue)
-
-mean_bill_pie_cap <- fig_nums(name='mean_bill_pie', caption= 'Average bill by parts for all agencies, considering a consumption of 10 CCF in a month. The average total bill is $60.68. With an average service charge (fixed) of $24.63 (40.6%) and an average commodity charge (variable) of $35.61 (58.7%).')
-```
-
-
-
-```{r rate_structure_type_pie, echo=FALSE}
-plot_rate_type_pie(df_final_bill)
-
-
-```
-
-```{r commodity_charge_vs_usage_line, echo=FALSE}
-
-plot_commodity_charges_vs_usage(df_final_bill, start, end, interval)
-```
-
-```{r, echo=FALSE}
-# plot_bills_vs_usage(df_final_bill, start, end, interval)
-```
-
-```{r commodity_charge_vs_usage_boxplot, echo=FALSE}
-
-# png(filename='plots/boxplot_bills.png',  width = 700, height = 432, units = "px")
-# plot(boxplot_bills_vs_usage(df_final_bill, start, end, interval))
-# dev.off()
-
-boxplot_bills_vs_usage(df_final_bill, start, end, interval)
-```
-
-
-
-
-```{r service_charge_ratio_histogram, echo=FALSE}
-# meanpercentFixed <- round(mean(as.numeric(df_final_bill$percentFixed[df_final_bill$usage_ccf == singleTargetValue])), 3)
-
-
-plot_ratio_histogram(df_final_bill, singleTargetValue)
-```
-
-```{r total_bill_histogram, echo=FALSE}
-plot_bill_histogram(df_final_bill, singleTargetValue)
-```
-
-# Rates x Efficiency
-## Define Period of Analysis
-Average water rates history:
-```{r, echo=FALSE, warning=FALSE}
-#plot_avg_price_history(df_final_bill)
-```
-
-
-## Calculate Efficiency
-Load suppliers report info and join with the Utilities list from the OWRS files
-```{r, echo=FALSE}
+# Join in supplier report
 #load supplier reports, geoinformation and pwsid_record
 supplier_reports <- read.csv('data/supplier_report.csv', stringsAsFactors=FALSE)
 #supplier_geo <- read.csv('data/suppliers.csv', stringsAsFactors=FALSE)
@@ -258,8 +129,184 @@ df_OWRS$utility_name_supplier_report <- ifelse(manually_mapped_names == "NULL",
                                                df_OWRS$utility_name_supplier_report,
                                                manually_mapped_names)
 
+merged_OWRS <- merge(df_OWRS, supplier_pwsid, by.x = "utility_name_supplier_report", by.y = "Agency_Name", 
+                     all.x=TRUE, all.y=FALSE)
 
 
+# calculate bills
+
+df_bill <- calculate_bills_for_all_utilities(merged_OWRS, supplier_reports, df_sample, owrs_path, customer_classes)
+
+#Format the Bill Information so that only valid data entries are presented, the decimal points are rounded, and the data is arranged by utility
+df_final_bill <- tbl_df(df_bill) %>% filter(!is.na(bill)) %>%
+  mutate(bill = round(as.numeric(bill), 2),
+         commodity_charge = round(as.numeric(commodity_charge), 2),
+         service_charge = round(service_charge, 2),
+         utility_name = as.character(utility_name),
+         bill_frequency = as.character(bill_frequency)) %>% 
+  arrange(utility_name)
+#End
+
+singleTargetValue <- 15
+df_final_bill_single <- df_final_bill %>% filter(usage_ccf == singleTargetValue) 
+```
+
+
+```{r past_years_data, echo=FALSE}
+df_past_years <- read.csv("data/raftelis_rate_surveys.csv", stringsAsFactors = FALSE)
+
+cross_year_fixed <- df_past_years %>% 
+  select(Survey.Year, Service.Area, Water.Service.Provider, Fixed.Charge) %>% 
+  tidyr::spread( key=Survey.Year, value=c(Fixed.Charge), sep=".") %>% 
+  arrange(Water.Service.Provider) %>%
+  filter(Survey.Year.2013 != "$-")
+
+cross_year_fixed_filtered <- cross_year_fixed %>% 
+  filter(!is.na(Survey.Year.2013)&!is.na(Survey.Year.2015))
+
+
+cross_year_commodity <- df_past_years %>% 
+  select(Survey.Year, Service.Area, Water.Service.Provider, Commodity.Charge) %>% 
+  tidyr::spread( key=Survey.Year, value=c(Commodity.Charge), sep=".") %>% 
+  arrange(Water.Service.Provider) %>%
+  filter(Survey.Year.2013 != "$-")
+
+cross_year_commodity_filtered <- cross_year_commodity %>% 
+  filter(!is.na(Survey.Year.2013)&!is.na(Survey.Year.2015))
+
+
+cross_year_total <- df_past_years %>% 
+  select(Survey.Year, Service.Area, Water.Service.Provider, Total.Charge) %>% 
+  tidyr::spread( key=Survey.Year, value=c(Total.Charge), sep=".") %>% 
+  arrange(Water.Service.Provider) %>%
+  filter(Survey.Year.2013 != "$-")
+
+cross_year_total_filtered <- cross_year_total %>% 
+  filter(!is.na(Survey.Year.2013)&!is.na(Survey.Year.2015))
+
+
+
+cross_year_rate_type <- df_past_years %>% 
+  select(Survey.Year, Service.Area, Water.Service.Provider, Rate.Format) %>% 
+  tidyr::spread( key=Survey.Year, value=c(Rate.Format), sep=".") %>% 
+  arrange(Water.Service.Provider) %>%
+  filter(Survey.Year.2013 != "$-")
+
+cross_year_rate_type_filtered <- cross_year_rate_type %>% 
+  filter(!is.na(Survey.Year.2013)&!is.na(Survey.Year.2015))
+```
+
+```{r}
+df_past_years$utility_name_raftelis <- sapply(df_past_years$Water.Service.Provider, preprocess_raftelis_name) 
+df_past_years <- assign_fuzzy_match_names(df_past_years, 
+                                          source_column_name = "utility_name_raftelis",
+                                          new_name_column = "utility_name_owrs",
+                                          names_to_match_with = df_final_bill_single$utility_name,
+                                          manual_map = NULL,
+                                          cutoff = 0.85)
+```
+
+
+
+# Summary Statistics
+
+This section discusses general characteristics of the rates for utilities analyzed in this survey.
+
+```{r bill_frequency_pie, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px", fig.cap = bill_freq_cap }
+p <- plot_bill_frequency_piechart(df_final_bill)
+
+img <- "img/bill_frequency_pie.png"
+ggsave(img, p)
+knitr::include_graphics(img)
+
+bill_freq_cap <- fig_nums(name='bill_frequency_piechart', caption= 'Bill Frequency Pie Chart. About three quarters of the water agencies use a monthly billing system.')
+
+```
+
+
+```{r mean_bill_by_parts_pie, echo=FALSE, message=FALSE, out.width="600px", fig.cap = mean_bill_pie_cap}
+p <- plot_mean_bill_pie(df_final_bill, singleTargetValue)
+
+img <- "img/mean_bill_by_parts_pie.png"
+ggsave(img, p)
+knitr::include_graphics(img)
+
+mean_bill_pie_cap <- fig_nums(name='mean_bill_pie', caption= 'Average bill by parts for all agencies, considering a consumption of 10 CCF in a month. The average total bill is $60.68. With an average service charge (fixed) of $24.63 (40.6%) and an average commodity charge (variable) of $35.61 (58.7%).')
+```
+
+
+
+```{r rate_structure_type_pie, echo=FALSE, message=FALSE, out.width="600px"}
+p <- plot_rate_type_pie(df_final_bill)
+
+img <- "img/rate_structure_type_pie.png"
+ggsave(img, p)
+knitr::include_graphics(img)
+```
+
+
+
+```{r service_charge_ratio_histogram, echo=FALSE, message=FALSE, out.width="600px"}
+# meanpercentFixed <- round(mean(as.numeric(df_final_bill$percentFixed[df_final_bill$usage_ccf == singleTargetValue])), 3)
+
+
+p <- plot_ratio_histogram(df_final_bill, singleTargetValue)
+
+img <- "img/service_charge_ratio_histogram.png"
+ggsave(img, p)
+knitr::include_graphics(img)
+```
+
+```{r total_bill_histogram, echo=FALSE, message=FALSE, out.width="600px"}
+p <- plot_bill_histogram(df_final_bill, singleTargetValue)
+
+img <- "img/total_bill_histogram.png"
+ggsave(img, p)
+knitr::include_graphics(img)
+```
+
+# Variation in Bills at Different Use Levels
+
+```{r commodity_charge_vs_usage_line, echo=FALSE, message=FALSE, out.width="600px"}
+
+p <- plot_commodity_charges_vs_usage(df_final_bill, start, end, interval)
+
+img <- "img/commodity_charge_vs_usage_line.png"
+ggsave(img, p)
+knitr::include_graphics(img)
+```
+
+```{r, echo=FALSE}
+# plot_bills_vs_usage(df_final_bill, start, end, interval)
+```
+
+```{r commodity_charge_vs_usage_boxplot, echo=FALSE, message=FALSE, out.width="600px"}
+
+# png(filename='plots/boxplot_bills.png',  width = 700, height = 432, units = "px")
+# plot(boxplot_bills_vs_usage(df_final_bill, start, end, interval))
+# dev.off()
+
+p <- boxplot_bills_vs_usage(df_final_bill, start, end, interval)
+
+img <- "img/commodity_charge_vs_usage_boxplot.png"
+ggsave(img, p)
+knitr::include_graphics(img)
+```
+
+
+
+
+# Interaction between Rates and Efficiency
+## Define Period of Analysis
+Average water rates history:
+```{r, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
+#plot_avg_price_history(df_final_bill)
+```
+
+
+## Calculate Efficiency
+Load suppliers report info and join with the Utilities list from the OWRS files
+```{r, echo=FALSE}
 # get pswid
 merged_OWRS <- merge(df_OWRS, supplier_pwsid, by.x = "utility_name_supplier_report", by.y = "Agency_Name", 
                      all.x=TRUE, all.y=FALSE)
@@ -283,39 +330,30 @@ merged_OWRS$report_monthyear <- as.Date(paste('01', as.character(merged_OWRS$rep
 ```
 
 
-```{r efficiency_goal_time_series_boxplot, echo=FALSE, warning=FALSE}
-plot_efficiency_ts(merged_OWRS)
+```{r efficiency_goal_time_series_boxplot, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
+p <- plot_efficiency_ts(merged_OWRS)
 
+img <- "img/efficiency_goal_time_series_boxplot.png"
+ggsave(img, p)
+knitr::include_graphics(img)
 ```
 
-```{r gpcd_time_series_boxplot, echo=FALSE, warning=FALSE}
-plot_gpcd_ts(merged_OWRS)
+```{r gpcd_time_series_boxplot, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
+p <- plot_gpcd_ts(merged_OWRS)
+
+img <- "img/gpcd_time_series_boxplot.png"
+ggsave(img, p)
+knitr::include_graphics(img)
 ```
 ## Compare Rates and efficiency
 ```{r, echo=FALSE}
-df_final_bill$utility_name_supplier_report <- as.character(sapply(df_final_bill$utility_name, GetCloseMatches,
-                                                sequence_strings = supplier_pwsid$Agency_Name, n=1L, cutoff = 0.85))
-
-owrs_to_supplier_report_manual_map <- list(
-  "Big Bear Lake  City Of" = "City of Big Bear Lake, Dept of Water & Power",
-  "Calaveras Public Utilities District" = "",
-  "Crescent City" = "Crescent City City of",
-  "Discovery Bay  Town Of" = "Discovery Bay Community Services District",
-  "Golden State Water Company - Hawthorne" = "Hawthorne City of",
-  "Golden State Water Company - Lakewood" = "",
-  "Marina Coast Water District - Central Marina" = "Marina Coast Water District",
-  "Marina Coast Water District - Ord Community" = "Marina Coast Water District",
-  "Rio Dell  City Of" = "",
-  "San Bernardino County Service Area 64 Spring Valley Lake" = "San Bernardino County Service Area 64",
-  "Sierra Estates Mutual Water Company" = ""
-)
-
-manually_mapped_names <- as.character(owrs_to_supplier_report_manual_map[df_final_bill$utility_name])
-df_final_bill$utility_name_supplier_report <- ifelse(manually_mapped_names == "NULL", 
-                                               df_final_bill$utility_name_supplier_report,
-                                               manually_mapped_names)
 
 
+df_final_bill <- assign_fuzzy_match_names(df_final_bill, 
+                                          source_column_name = "utility_name",
+                                          new_name_column = "utility_name_supplier_report",
+                                           names_to_match_with = supplier_pwsid$Agency_Name,
+                                           manual_map = owrs_to_supplier_report_manual_map)
 
 df_final_bill <- merge(df_final_bill, supplier_pwsid, by.x = "utility_name_supplier_report", by.y = "Agency_Name", all.x=TRUE, all.y=FALSE)
 
@@ -328,8 +366,12 @@ eff_vs_rate <- merge(df_final_bill, merged_OWRS,
 ```
 
 Scatter plot of Efficiency (pct_above_target) vs Rates (Total Bill for 15 CCF)
-```{r efficiency_goal_vs_total_bill_scatter_trend, echo=FALSE, warning=FALSE}
-plot_eff_vs_bill(eff_vs_rate, singleTargetValue)
+```{r efficiency_goal_vs_total_bill_scatter_trend, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
+p <- plot_eff_vs_bill(eff_vs_rate, singleTargetValue)
+
+img <- "img/efficiency_goal_vs_total_bill_scatter_trend.png"
+ggsave(img, p)
+knitr::include_graphics(img)
 ```
 
 
@@ -352,32 +394,44 @@ quali_survey$rev_pct_fixed <- as.numeric(quali_survey$rev_pct_fixed)
 ```
 
 Scatter plot of Efficiency vs Rates Structure (% Fixed  - for 15 CCF)
-```{r efficiency_goal_vs_percent_fixed_scatter_trend, echo=FALSE, warning=FALSE}
+```{r efficiency_goal_vs_percent_fixed_scatter_trend, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
 agg_eff_vs_rate <- eff_vs_rate[c("PWSID", "usage_month", "usage_year",
                                  "bill", "pct_above_target")] %>% na.omit() %>%
                         group_by(PWSID) %>% summarise_all(funs(mean))
 
-plot_eff_vs_pctFixed(eff_vs_rate %>% filter(usage_ccf == singleTargetValue))
+p <- plot_eff_vs_pctFixed(eff_vs_rate %>% filter(usage_ccf == singleTargetValue))
+
+img <- "img/efficiency_goal_vs_percent_fixed_scatter_trend.png"
+ggsave(img, p)
+knitr::include_graphics(img)
 ```
 
-```{r fixed_cost_percentage_histogram, echo=FALSE, warning=FALSE}
-pct_costs <- ggplot(quali_survey, aes(costs_pct_fixed)) + geom_histogram(bins = 10)
+```{r fixed_cost_percentage_histogram, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
+p <- ggplot(quali_survey, aes(costs_pct_fixed)) + geom_histogram(bins = 10)
 
-pct_costs
+img <- "img/fixed_cost_percentage_histogram.png"
+ggsave(img, p)
+knitr::include_graphics(img)
 ```
 
 
 
-```{r fixed_revenue_percentage_histogram, echo=FALSE, warning=FALSE}
-pct_rev <- ggplot(quali_survey, aes(rev_pct_fixed)) + geom_histogram(bins = 10)
+```{r fixed_revenue_percentage_histogram, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
+p <- ggplot(quali_survey, aes(rev_pct_fixed)) + geom_histogram(bins = 10)
 
-pct_rev
+img <- "img/fixed_revenue_percentage_histogram.png"
+ggsave(img, p)
+knitr::include_graphics(img)
 ```
 
-```{r fixed_costs_vs_fixed_rev_scatter, echo=FALSE, warning=FALSE}
+```{r fixed_costs_vs_fixed_rev_scatter, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
 quali_survey$fixedRev_per_fixedCosts <- quali_survey$rev_pct_fixed / quali_survey$costs_pct_fixed
 
-ggplot(quali_survey, aes(x=costs_pct_fixed, y=rev_pct_fixed)) + geom_point()
+p <- ggplot(quali_survey, aes(x=costs_pct_fixed, y=rev_pct_fixed)) + geom_point()
+
+img <- "img/fixed_costs_vs_fixed_rev_scatter.png"
+ggsave(img, p)
+knitr::include_graphics(img)
 ```
 
 

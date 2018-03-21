@@ -115,7 +115,7 @@ singleUtilitySim <- function(df_sample, df_OWRS_row, owrs_file, current_class){
 }
 
 
-calculate_bills_for_all_utilities <- function(df_OWRS, df_sample, owrs_path, customer_classes){
+calculate_bills_for_all_utilities <- function(df_OWRS, supplier_report, df_sample, owrs_path, customer_classes){
   #Declare Null Data Set
   df_NA <- data.frame(
     usage_ccf = NA,
@@ -134,6 +134,8 @@ calculate_bills_for_all_utilities <- function(df_OWRS, df_sample, owrs_path, cus
   
   for(i in 1:nrow(df_OWRS))
   {
+    row <- df_OWRS[i,]
+    
     if(i==1){
       df_bill <- NULL
     }
@@ -141,12 +143,12 @@ calculate_bills_for_all_utilities <- function(df_OWRS, df_sample, owrs_path, cus
     #Open OWRS file and retrieve important data
     owrs_file <- tryCatch({
       #Open OWRS file
-      getFileData(owrs_path, df_OWRS[i,]$filepath)
+      getFileData(owrs_path, row$filepath)
     },
     error = function(cond){
       #Display Error Message for specific files
       print(i)
-      message(paste("Format error in file:", df_OWRS[i,]$filepath, "\n", cond, "\n"))
+      message(paste("Format error in file:", row$filepath, "\n", cond, "\n"))
       return(NULL)
     })
     
@@ -157,7 +159,8 @@ calculate_bills_for_all_utilities <- function(df_OWRS, df_sample, owrs_path, cus
       {
         current_class <- customer_classes[j]
         owrs_str <- jsonlite::toJSON(owrs_file$rate_structure[[current_class]])
-
+       
+        # customize the sample for each utility
         tmp_sample <- df_sample
         if(grepl('3/4', owrs_str)){
         }else if(grepl('5/8', owrs_str)){
@@ -167,6 +170,27 @@ calculate_bills_for_all_utilities <- function(df_OWRS, df_sample, owrs_path, cus
           tmp_sample <- df_sample
           tmp_sample$meter_size <- '1"'
         }
+        
+        
+        if(!is.na(row$PWSID) && nchar(row$PWSID) > 1){
+          browser()
+          
+          tmp_report <- supplier_report %>% 
+            filter(report_pwsid == row$PWSID,
+                   report_month == tmp_sample$usage_month[1]) %>%
+            summarise(report_eto = mean(report_eto, na.rm=TRUE),
+                      report_gpcd = mean(report_gpcd_calculated, na.rm=TRUE))
+          
+          if(!is.na(tmp_report$report_eto)){
+            tmp_sample$et_amount <- tmp_report$report_eto
+          }
+          if(!is.na(tmp_report$report_gpcd)){
+            tmp_sample$usage_ccf <- tmp_report$report_gpcd*4*tmp_sample$days_in_period/748
+          }
+            
+        }
+        
+        
           
         df_temp <- tryCatch({
           singleUtilitySim(tmp_sample, df_OWRS[i,], owrs_file, current_class)
