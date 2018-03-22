@@ -115,7 +115,7 @@ singleUtilitySim <- function(df_sample, df_OWRS_row, owrs_file, current_class){
 }
 
 
-calculate_bills_for_all_utilities <- function(df_OWRS, supplier_report, df_sample, owrs_path, customer_classes){
+calculate_bills_for_all_utilities <- function(df_OWRS, supplier_report, df_sample, owrs_path, customer_classes, single_value){
   #Declare Null Data Set
   df_NA <- data.frame(
     usage_ccf = NA,
@@ -171,25 +171,30 @@ calculate_bills_for_all_utilities <- function(df_OWRS, supplier_report, df_sampl
           tmp_sample$meter_size <- '1"'
         }
         
+        tmp_sample$is_single <- FALSE
+        tmp_row <- tmp_sample[1,]
+        tmp_row$is_single <- TRUE
         
         if(!is.na(row$PWSID) && nchar(row$PWSID) > 1){
-          browser()
-          
           tmp_report <- supplier_report %>% 
             filter(report_pwsid == row$PWSID,
-                   report_month == tmp_sample$usage_month[1]) %>%
+                   report_month == tmp_row$usage_month) %>%
             summarise(report_eto = mean(report_eto, na.rm=TRUE),
                       report_gpcd = mean(report_gpcd_calculated, na.rm=TRUE))
           
           if(!is.na(tmp_report$report_eto)){
-            tmp_sample$et_amount <- tmp_report$report_eto
+            tmp_row$et_amount <- tmp_report$report_eto
           }
           if(!is.na(tmp_report$report_gpcd)){
-            tmp_sample$usage_ccf <- tmp_report$report_gpcd*4*tmp_sample$days_in_period/748
+            tmp_row$usage_ccf <- tmp_report$report_gpcd*4*tmp_row$days_in_period/748
+          }else{
+            tmp_row$usage_ccf <- single_value
           }
             
+        }else{
+          tmp_row$usage_ccf <- single_value
         }
-        
+        tmp_sample <- bind_rows(tmp_sample, tmp_row)
         
           
         df_temp <- tryCatch({

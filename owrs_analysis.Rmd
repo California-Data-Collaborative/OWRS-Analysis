@@ -67,13 +67,13 @@ df_adjustable_sample <- tbl_df(data.frame (usage_month = 7, days_in_period = 31,
                                            senior = "no", cust_class = customer_classes[1]))
 
 #change for The scatter plots (If start = end the process will be a lot faster if only concerned with histograms and bar/pie charts)
-start <- 0;
-end <- 50;
-interval <- 5;
+start <- 0
+end <- 50
+interval <- 5
 df_usage <- as.data.frame(list("usage_ccf"=seq(start,end,interval), "cust_class"="RESIDENTIAL_SINGLE"))
 df_sample <-  left_join(df_usage, df_adjustable_sample, by="cust_class")
 
-
+singleTargetValue <- 15
 
 #Retrieve the directories and files in the directores from the Open-Water-Specification-File directory
 owrs_path <- "../Open-Water-Rate-Specification/full_utility_rates/California";
@@ -99,7 +99,8 @@ df_OWRS <- df_OWRS %>% group_by(utility_name) %>%
 
 # Join in supplier report
 #load supplier reports, geoinformation and pwsid_record
-supplier_reports <- read.csv('data/supplier_report.csv', stringsAsFactors=FALSE)
+supplier_reports <- read.csv('data/supplier_report.csv', stringsAsFactors=FALSE) %>%
+  mutate(rgpcd = report_production_calculated*report_percent_residential/report_population/report_days_in_month)
 #supplier_geo <- read.csv('data/suppliers.csv', stringsAsFactors=FALSE)
 supplier_pwsid <- read.csv('data/utilities_for_OWRS.csv', stringsAsFactors=FALSE)
 
@@ -135,7 +136,7 @@ merged_OWRS <- merge(df_OWRS, supplier_pwsid, by.x = "utility_name_supplier_repo
 
 # calculate bills
 
-df_bill <- calculate_bills_for_all_utilities(merged_OWRS, supplier_reports, df_sample, owrs_path, customer_classes)
+df_bill <- calculate_bills_for_all_utilities(merged_OWRS, supplier_reports, df_sample, owrs_path, customer_classes, singleTargetValue)
 
 #Format the Bill Information so that only valid data entries are presented, the decimal points are rounded, and the data is arranged by utility
 df_final_bill <- tbl_df(df_bill) %>% filter(!is.na(bill)) %>%
@@ -147,8 +148,11 @@ df_final_bill <- tbl_df(df_bill) %>% filter(!is.na(bill)) %>%
   arrange(utility_name)
 #End
 
-singleTargetValue <- 15
-df_final_bill_single <- df_final_bill %>% filter(usage_ccf == singleTargetValue) 
+df_final_bill_single <- df_final_bill %>% filter(is_single == TRUE) 
+df_final_bill <- df_final_bill %>% filter(is_single == FALSE) 
+
+# df_final_bill <- df_final_bill %>% filter(is_single == FALSE) 
+# df_final_bill_single <- df_final_bill %>% filter(usage_ccf == singleTargetValue) 
 ```
 
 
