@@ -27,25 +27,11 @@ This report provides the combined analysis of data from 4 different sources:
 
 
 
-
-
-
-
-```r
-df_past_years$utility_name_raftelis <- sapply(df_past_years$Water.Service.Provider, preprocess_raftelis_name) 
-df_past_years <- assign_fuzzy_match_names(df_past_years, 
-                                          source_column_name = "utility_name_raftelis",
-                                          new_name_column = "utility_name_owrs",
-                                          names_to_match_with = df_final_bill_single$utility_name,
-                                          manual_map = NULL,
-                                          cutoff = 0.85)
-```
-
-
-
 # Summary Statistics
 
 This section discusses general characteristics of the rates for utilities analyzed in this survey.
+
+
 
 <div class="figure">
 <img src="img/bill_frequency_pie.png" alt="Figure  1: Bill Frequency Pie Chart. About three quarters of the water agencies use a monthly billing system." width="600px" />
@@ -95,6 +81,11 @@ Load suppliers report info and join with the Utilities list from the OWRS files
 <img src="img/gpcd_time_series_boxplot.png" width="600px" />
 ## Compare Rates and efficiency
 
+```
+## Warning in `[<-.data.frame`(`*tmp*`, new_name_column, value =
+## list(c("Alameda County Water District", : provided 2574 variables to
+## replace 1 variables
+```
 
 Scatter plot of Efficiency (pct_above_target) vs Rates (Total Bill for 15 CCF)
 <img src="img/efficiency_goal_vs_total_bill_scatter_trend.png" width="600px" />
@@ -103,6 +94,11 @@ Scatter plot of Efficiency (pct_above_target) vs Rates (Total Bill for 15 CCF)
 
 ## Joining Data from the Qualitative Survey
 
+```
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+```
 
 Scatter plot of Efficiency vs Rates Structure (% Fixed  - for 15 CCF)
 <img src="img/efficiency_goal_vs_percent_fixed_scatter_trend.png" width="600px" />

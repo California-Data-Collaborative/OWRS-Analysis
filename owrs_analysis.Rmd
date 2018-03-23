@@ -19,6 +19,7 @@ library(lubridate)
 library(captioner)
 library(png)
 library(grid)
+library(ggthemes)
 ```
 
 # Introduction
@@ -217,7 +218,7 @@ df_past_years <- assign_fuzzy_match_names(df_past_years,
 This section discusses general characteristics of the rates for utilities analyzed in this survey.
 
 ```{r bill_frequency_pie, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px", fig.cap = bill_freq_cap }
-p <- plot_bill_frequency_piechart(df_final_bill)
+p <- plot_bill_frequency_piechart(df_final_bill_single)
 
 img <- "img/bill_frequency_pie.png"
 ggsave(img, p)
@@ -229,7 +230,7 @@ bill_freq_cap <- fig_nums(name='bill_frequency_piechart', caption= 'Bill Frequen
 
 
 ```{r mean_bill_by_parts_pie, echo=FALSE, message=FALSE, out.width="600px", fig.cap = mean_bill_pie_cap}
-p <- plot_mean_bill_pie(df_final_bill, singleTargetValue)
+p <- plot_mean_bill_pie(df_final_bill_single)
 
 img <- "img/mean_bill_by_parts_pie.png"
 ggsave(img, p)
@@ -241,7 +242,7 @@ mean_bill_pie_cap <- fig_nums(name='mean_bill_pie', caption= 'Average bill by pa
 
 
 ```{r rate_structure_type_pie, echo=FALSE, message=FALSE, out.width="600px"}
-p <- plot_rate_type_pie(df_final_bill)
+p <- plot_rate_type_pie(df_final_bill_single)
 
 img <- "img/rate_structure_type_pie.png"
 ggsave(img, p)
@@ -254,7 +255,7 @@ knitr::include_graphics(img)
 # meanpercentFixed <- round(mean(as.numeric(df_final_bill$percentFixed[df_final_bill$usage_ccf == singleTargetValue])), 3)
 
 
-p <- plot_ratio_histogram(df_final_bill, singleTargetValue)
+p <- plot_ratio_histogram(df_final_bill_single)
 
 img <- "img/service_charge_ratio_histogram.png"
 ggsave(img, p)
@@ -262,7 +263,7 @@ knitr::include_graphics(img)
 ```
 
 ```{r total_bill_histogram, echo=FALSE, message=FALSE, out.width="600px"}
-p <- plot_bill_histogram(df_final_bill, singleTargetValue)
+p <- plot_bill_histogram(df_final_bill_single)
 
 img <- "img/total_bill_histogram.png"
 ggsave(img, p)
@@ -353,17 +354,17 @@ knitr::include_graphics(img)
 ```{r, echo=FALSE}
 
 
-df_final_bill <- assign_fuzzy_match_names(df_final_bill, 
+df_final_bill_single <- assign_fuzzy_match_names(df_final_bill_single, 
                                           source_column_name = "utility_name",
                                           new_name_column = "utility_name_supplier_report",
                                            names_to_match_with = supplier_pwsid$Agency_Name,
                                            manual_map = owrs_to_supplier_report_manual_map)
 
-df_final_bill <- merge(df_final_bill, supplier_pwsid, by.x = "utility_name_supplier_report", by.y = "Agency_Name", all.x=TRUE, all.y=FALSE)
+df_final_bill_single <- merge(df_final_bill_single, supplier_pwsid, by.x = "utility_name_supplier_report", by.y = "Agency_Name", all.x=TRUE, all.y=FALSE)
 
 
 #merge on PWSID, month and Year
-eff_vs_rate <- merge(df_final_bill, merged_OWRS, 
+eff_vs_rate <- merge(df_final_bill_single, merged_OWRS, 
                      by.x = c("PWSID", "usage_month", "usage_year"),
                      by.y = c("PWSID", "report_month", "report_year"),
                      all.x=TRUE, all.y=FALSE)
@@ -371,7 +372,7 @@ eff_vs_rate <- merge(df_final_bill, merged_OWRS,
 
 Scatter plot of Efficiency (pct_above_target) vs Rates (Total Bill for 15 CCF)
 ```{r efficiency_goal_vs_total_bill_scatter_trend, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
-p <- plot_eff_vs_bill(eff_vs_rate, singleTargetValue)
+p <- plot_eff_vs_bill(eff_vs_rate)
 
 img <- "img/efficiency_goal_vs_total_bill_scatter_trend.png"
 ggsave(img, p)
@@ -381,7 +382,7 @@ knitr::include_graphics(img)
 
 
 ## Joining Data from the Qualitative Survey
-```{r, echo=FALSE}
+```{r, echo=FALSE, warning=FALSE}
 #read the survey data in
 hd <- read.csv('data/2017 CA-NV Rate Survey.csv', nrows=2, header=FALSE, stringsAsFactors = FALSE)
 quali_survey <- read.csv('data/2017 CA-NV Rate Survey.csv', skip=2, header=FALSE, stringsAsFactors = FALSE)
@@ -403,7 +404,7 @@ agg_eff_vs_rate <- eff_vs_rate[c("PWSID", "usage_month", "usage_year",
                                  "bill", "pct_above_target")] %>% na.omit() %>%
                         group_by(PWSID) %>% summarise_all(funs(mean))
 
-p <- plot_eff_vs_pctFixed(eff_vs_rate %>% filter(usage_ccf == singleTargetValue))
+p <- plot_eff_vs_pctFixed(eff_vs_rate)# %>% filter(usage_ccf == singleTargetValue))
 
 img <- "img/efficiency_goal_vs_percent_fixed_scatter_trend.png"
 ggsave(img, p)
@@ -411,7 +412,13 @@ knitr::include_graphics(img)
 ```
 
 ```{r fixed_cost_percentage_histogram, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
-p <- ggplot(quali_survey, aes(costs_pct_fixed)) + geom_histogram(bins = 10)
+chart_count <- nrow(quali_survey %>% filter(!is.na(costs_pct_fixed)))
+p <- ggplot(quali_survey, aes(costs_pct_fixed)) + geom_histogram(bins = 10) +
+  xlab("Fixed Costs Percentage")+
+  ylab("Count of Districts") +
+  ggtitle("Distribution of Fixed Costs", subtitle = paste(chart_count,"Districts Total"))+
+  theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 20),
+        legend.position = "none")
 
 img <- "img/fixed_cost_percentage_histogram.png"
 ggsave(img, p)
@@ -421,7 +428,13 @@ knitr::include_graphics(img)
 
 
 ```{r fixed_revenue_percentage_histogram, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
-p <- ggplot(quali_survey, aes(rev_pct_fixed)) + geom_histogram(bins = 10)
+chart_count <- nrow(quali_survey %>% filter(!is.na(rev_pct_fixed)))
+p <- ggplot(quali_survey, aes(rev_pct_fixed)) + geom_histogram(bins = 10) +
+  xlab("Fixed Revenue Percentage")+
+  ylab("Count of Districts") +
+  ggtitle("Distribution of Fixed Revenue", subtitle = paste(chart_count,"Districts Total"))+
+  theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 20),
+        legend.position = "none")
 
 img <- "img/fixed_revenue_percentage_histogram.png"
 ggsave(img, p)
@@ -431,7 +444,14 @@ knitr::include_graphics(img)
 ```{r fixed_costs_vs_fixed_rev_scatter, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
 quali_survey$fixedRev_per_fixedCosts <- quali_survey$rev_pct_fixed / quali_survey$costs_pct_fixed
 
-p <- ggplot(quali_survey, aes(x=costs_pct_fixed, y=rev_pct_fixed)) + geom_point()
+chart_count <- nrow(quali_survey %>% filter(!is.na(costs_pct_fixed)&!is.na(rev_pct_fixed)))
+
+p <- ggplot(quali_survey, aes(x=costs_pct_fixed, y=rev_pct_fixed)) + geom_point() +
+  xlab("Fixed Cost Percentage")+
+  ylab("Fixed Revenue Percentage") +
+  ggtitle("Fixed Revenue vs. Fixed Costs", subtitle = paste(chart_count,"Districts Total"))+
+  theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 20),
+        legend.position = "none")
 
 img <- "img/fixed_costs_vs_fixed_rev_scatter.png"
 ggsave(img, p)

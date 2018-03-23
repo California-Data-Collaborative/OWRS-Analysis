@@ -31,7 +31,7 @@ plot_bill_frequency_piechart <- function(df){
     geom_text(aes(y = rev(Value)/2 + c(0, cumsum(rev(Value))[-length(Value)]), 
                   label = paste(rev(Value), "\n(", percent(rev(Value)/nrow(df_distint_util)), ")", sep="") ), 
                   size=4) +
-    ggtitle("Analysis of Bill Frequency")  + 
+    ggtitle("Counts by Bill Frequency")  + 
     theme(plot.title = element_text(lineheight= .5, face="bold")) + 
     labs(fill = "Bill Frequencies")
   
@@ -39,8 +39,8 @@ plot_bill_frequency_piechart <- function(df){
 }
 
 
-plot_mean_bill_pie <- function(df, demo_ccf){
-  filtered <- df %>% filter(usage_ccf == demo_ccf) %>%
+plot_mean_bill_pie <- function(df){
+  filtered <- df %>% #filter(usage_ccf == demo_ccf) %>%
     distinct(utility_name, .keep_all=TRUE)
   
   meanBill <- round(mean(filtered$bill), 2)
@@ -48,9 +48,9 @@ plot_mean_bill_pie <- function(df, demo_ccf){
   meanCommodity <- round(mean(filtered$commodity_charge), 2)
   meanOther <- round(meanBill - (meanService + meanCommodity), 2)
   
-  Mean <- c( "Service Charge", "Commodity Charge", "Other Charge")
+  Mean <- c( "Service Charge", "Commodity Charge")#, "Other Charge")
   Mean <- factor(Mean, levels = Mean)
-  Mean_DF <- data.frame(Mean, c(meanService, meanCommodity, meanOther))
+  Mean_DF <- data.frame(Mean, c(meanService, meanCommodity))#, meanOther))
   names(Mean_DF) <- c("Charge_Structure", "Value")
   
   meanBillPie <- ggplot(Mean_DF, aes(x= 2, y=Value, fill= Charge_Structure)) +
@@ -59,9 +59,8 @@ plot_mean_bill_pie <- function(df, demo_ccf){
     scale_fill_brewer(palette="Greens") + 
     theme_void() +
     geom_text(aes(y = rev(Value)/2 + c(0, cumsum(rev(Value))[-length(Value)]), 
-                  label = printCurrency(Value))) +
-    ggtitle("Mean Bill by Parts", subtitle = paste("The total mean bill for ", 
-                                                   demo_ccf, " usage ccf is ", 
+                  label = printCurrency(rev(Value) ))) +
+    ggtitle("Mean Bill by Parts", subtitle = paste("The total mean bill is ", 
                                                    printCurrency(meanBill), "0", sep = ""))  +
     labs(fill = "Charges") +
     theme(plot.title = element_text(lineheight=.8, face="bold"), plot.subtitle = element_text(lineheight = .8))
@@ -100,12 +99,51 @@ plot_rate_type_pie <- function(df){
     geom_text(aes(y = rev(Value)/2 + c(0, cumsum(rev(Value))[-length(Value)]), x=2,
                   label = paste(rev(Value), "\n(", percent(rev(Value)/nrow(df_distint_util)), ")", sep="") ),
                   size=4) +
-    ggtitle("Analysis of Rate Structure")  + 
+    ggtitle("Counts of Rate Structure Types")  + 
     theme(plot.title = element_text(lineheight=.8, face="bold")) + 
     labs(fill = "Rate Structures")
   
   rateStructurePie
 }
+
+
+
+plot_ratio_histogram <- function(df){
+  filtered <- df %>% #filter(usage_ccf == demo_ccf) %>%
+    distinct(utility_name, .keep_all=TRUE)
+  
+  ratio_histogram <- ggplot(filtered, aes(x=percentFixed)) +
+    geom_histogram(binwidth=.05, colour="black", fill="white")+
+    labs(x = "Proportion of Total Bill", y = "Count of Districts")+
+    ggtitle(paste("Fixed Service Charge as Proportion of Total Bill"))+
+    scale_y_continuous(expand = c(0,0))+
+    theme(axis.title.x = element_text(size = 15), axis.title.y = element_text(size = 15),
+          axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10),
+          title = element_text(size = 12)) +
+    geom_vline(xintercept = mean(filtered$percentFixed), color = "red") + theme_economist()
+  
+  ratio_histogram
+}
+
+plot_bill_histogram <- function(df){
+  filtered <- df %>% #filter(usage_ccf == demo_ccf) %>%
+    distinct(utility_name, .keep_all=TRUE)
+  
+  bill_histogram <- ggplot(filtered, aes(x=bill)) +
+    geom_histogram(binwidth=(max(filtered$bill)- min(filtered$bill))/ round(length(filtered$bill)/10), colour="black", fill="white")+
+    labs(x = "Bill Amount ($)", y = "Count of Districts")+
+    ggtitle(paste("Total Bill"))+
+    scale_y_continuous(expand = c(0,0))+
+    #scale_x_continuous(breaks=seq(round(min(filtered$bill)), round(max(filtered$bill)), round((max(filtered$bill)- min(filtered$bill))/ (length(filtered$bill)/8), 0)))+
+    theme(axis.title.x = element_text(size = 15), axis.title.y = element_text(size = 15),
+          axis.text.x = element_text(size = 15), axis.text.y = element_text(size = 15),
+          title = element_text(size = 15)) +
+    geom_vline(xintercept = mean(filtered$bill), color = "red")
+  
+  
+  bill_histogram
+}
+
 
 
 plot_commodity_charges_vs_usage <- function(df, start, end, interval){
@@ -144,41 +182,6 @@ boxplot_bills_vs_usage <- function(df, start, end, interval){
   bill_box
 }
 
-plot_ratio_histogram <- function(df, demo_ccf){
-  filtered <- df %>% filter(usage_ccf == demo_ccf) %>%
-    distinct(utility_name, .keep_all=TRUE)
-  
-  ratio_histogram <- ggplot(filtered, aes(x=percentFixed)) +
-    geom_histogram(binwidth=.05, colour="black", fill="white")+
-    labs(x = "Proportion of Total Bill", y = "Number of utilities in that range")+
-    ggtitle(paste("Ratio of Service Charge to Total Bill at", demo_ccf, "Usage CCF"))+
-    scale_y_continuous(expand = c(0,0))+
-    theme(axis.title.x = element_text(size = 15), axis.title.y = element_text(size = 15),
-          axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10),
-          title = element_text(size = 12)) +
-    geom_vline(xintercept = mean(filtered$percentFixed), color = "red")
-  
-  ratio_histogram
-}
-
-plot_bill_histogram <- function(df, demo_ccf){
-  filtered <- df %>% filter(usage_ccf == demo_ccf) %>%
-    distinct(utility_name, .keep_all=TRUE)
-  
-  bill_histogram <- ggplot(filtered, aes(x=bill)) +
-    geom_histogram(binwidth=(max(filtered$bill)- min(filtered$bill))/ round(length(filtered$bill)/10), colour="black", fill="white")+
-    labs(x = "Bill Amount ($)", y = "Number of Utilities in that Range")+
-    ggtitle(paste("Total Bill at", singleTargetValue, "Usage CCF"))+
-    scale_y_continuous(expand = c(0,0))+
-    #scale_x_continuous(breaks=seq(round(min(filtered$bill)), round(max(filtered$bill)), round((max(filtered$bill)- min(filtered$bill))/ (length(filtered$bill)/8), 0)))+
-    theme(axis.title.x = element_text(size = 15), axis.title.y = element_text(size = 15),
-          axis.text.x = element_text(size = 15), axis.text.y = element_text(size = 15),
-          title = element_text(size = 15)) +
-    geom_vline(xintercept = mean(filtered$bill), color = "red")
-  
-  
-  bill_histogram
-}
 
 plot_avg_price_history <- function(df){
   avg_price_hist <- ggplot(df,
@@ -186,7 +189,7 @@ plot_avg_price_history <- function(df){
     geom_boxplot()  +
     scale_x_date(name = "")+
     scale_y_continuous(name = "Total Bill (Dollars)", limits = c(0,200)) +
-    ggtitle("Average Price History for 15 CCF")+
+    ggtitle("Average Price History")+
     theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 25),
           legend.position = "none")
   
@@ -199,10 +202,10 @@ plot_efficiency_ts <- function(df){
   eff_ts <- ggplot(df, 
                    aes(x=as.Date(report_date), y=pct_above_target, group=report_monthyear)) +
     geom_boxplot()  +
-    scale_x_date(name="")+
-    scale_y_continuous(name = "Percentage above target")+
-    ggtitle("Efficiency Time Series")+
-    theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 25),
+    scale_x_date(name="Date")+
+    scale_y_continuous(name = "Efficiency Ratio (Use/Goal)")+
+    ggtitle("Efficiency of all Districts", subtitle = "Relative to Their Efficiency Goal")+
+    theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 20),
           legend.position = "none")
   
   
@@ -216,23 +219,25 @@ plot_gpcd_ts <- function(df){
     geom_boxplot()  +
     scale_x_date(name = "")+
     scale_y_continuous(name = "Residential GPCD (calculated)") +
-    ggtitle("GPCD (calculated) Time Series")+
-    theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 25),
+    ggtitle("Residential GPCD of all Districts", subtitle = paste(nrow(df),"Districts Total"))+
+    theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 20),
           legend.position = "none")
   
   gpcd_ts
 }
 
-plot_eff_vs_bill <- function(df, target_ccf){
+plot_eff_vs_bill <- function(df){
   
-  df <- df %>% filter(usage_ccf == target_ccf) 
+  # df <- df %>% filter(usage_ccf == target_ccf) 
+  
+  chart_count <- nrow(df %>% filter(!is.na(bill)&!is.na(pct_above_target) ))
   
   eff_vs_bill <- ggplot(df, 
                         aes(x=bill, y=pct_above_target)) +
     geom_point(shape=1) +
     labs(x = "Total Bill (Dollars)", y = "Efficiency Ratio (Use/Goal)") +
-    ggtitle( paste("Efficiency vs Total Bill at ", target_ccf, "CCF") )+
-    theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 25),
+    ggtitle( paste("Efficiency vs Total Bill", subtitle = paste(chart_count,"Districts Total")) )+
+    theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 20),
           legend.position = "none")+
     geom_smooth(method='lm')
   eff_vs_bill
@@ -241,12 +246,14 @@ plot_eff_vs_bill <- function(df, target_ccf){
 
 plot_eff_vs_pctFixed <- function(df){
   
+  chart_count <- nrow(df %>% filter(!is.na(percentFixed)&!is.na(pct_above_target) ))
+  
   eff_vs_pctFixed <- ggplot(df, 
                             aes(x=percentFixed, y=pct_above_target)) +
     geom_point(shape=1) +
     labs(x = "Percentage of Service Charge in Total Bill", y = "Percent above target") +
-    ggtitle("Efficiency vs Percent of Fixed Rate")+
-    theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 25),
+    ggtitle("Efficiency vs Percent of Fixed Rate", subtitle = paste(chart_count,"Districts Total"))+
+    theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 20),
           legend.position = "none")+
     geom_smooth(method='lm')
   

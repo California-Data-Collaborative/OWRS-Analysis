@@ -21,16 +21,16 @@ assign_fuzzy_match_names <- function(df, source_column_name,
                                      new_name_column = "fuzzy_match", 
                                      names_to_match_with, manual_map, cutoff=0.85){
   
+  
   df[new_name_column] <- as.character(sapply( df[[source_column_name]], 
                                               GetCloseMatches,
                                                 sequence_strings =  names_to_match_with, 
                                                 n=1L, cutoff = cutoff))
   
-  
   if(!is.null(manual_map)){
-    manually_mapped_names <- as.character(manual_map[df[source_column_name]])
+    manually_mapped_names <- as.character(manual_map[df[[source_column_name]]])
     df[new_name_column] <- ifelse(manually_mapped_names == "NULL", 
-                                  df[new_name_column],
+                                  df[[new_name_column]],
                                   manually_mapped_names)
   }
   
