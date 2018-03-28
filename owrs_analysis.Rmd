@@ -19,6 +19,8 @@ library(lubridate)
 library(captioner)
 library(png)
 library(grid)
+library(gridExtra)
+library(cowplot)
 library(ggthemes)
 ```
 
@@ -149,11 +151,13 @@ df_final_bill <- tbl_df(df_bill) %>% filter(!is.na(bill)) %>%
   arrange(utility_name)
 #End
 
-df_final_bill_single <- df_final_bill %>% filter(is_single == TRUE) 
-df_final_bill <- df_final_bill %>% filter(is_single == FALSE) 
+# Customized benchmark
+df_final_bill_single <- df_final_bill %>% filter(is_single == TRUE)
+df_final_bill <- df_final_bill %>% filter(is_single == FALSE)
 
-# df_final_bill <- df_final_bill %>% filter(is_single == FALSE) 
-# df_final_bill_single <- df_final_bill %>% filter(usage_ccf == singleTargetValue) 
+# Global 15 CCF benchmark
+# df_final_bill <- df_final_bill %>% filter(is_single == FALSE)
+# df_final_bill_single <- df_final_bill %>% filter(usage_ccf == singleTargetValue)
 ```
 
 
@@ -201,7 +205,7 @@ cross_year_rate_type_filtered <- cross_year_rate_type %>%
   filter(!is.na(Survey.Year.2013)&!is.na(Survey.Year.2015))
 ```
 
-```{r}
+```{r, echo=FALSE}
 df_past_years$utility_name_raftelis <- sapply(df_past_years$Water.Service.Provider, preprocess_raftelis_name) 
 df_past_years <- assign_fuzzy_match_names(df_past_years, 
                                           source_column_name = "utility_name_raftelis",
@@ -250,6 +254,15 @@ knitr::include_graphics(img)
 ```
 
 
+```{r usage_histogram, echo=FALSE, message=FALSE, out.width="600px"}
+p <- plot_usage_histogram(df_final_bill_single)
+
+img <- "img/usage_histogram.png"
+ggsave(img, p)
+knitr::include_graphics(img)
+```
+
+Testing a different plot theme:
 
 ```{r service_charge_ratio_histogram, echo=FALSE, message=FALSE, out.width="600px"}
 # meanpercentFixed <- round(mean(as.numeric(df_final_bill$percentFixed[df_final_bill$usage_ccf == singleTargetValue])), 3)
@@ -280,6 +293,16 @@ img <- "img/commodity_charge_vs_usage_line.png"
 ggsave(img, p)
 knitr::include_graphics(img)
 ```
+
+
+```{r bill_quantiles_vs_usage, echo=FALSE, message=FALSE, out.width="600px"}
+p <- plot_bill_quantiles_vs_usage(df_final_bill)
+
+img <- "img/bill_quantiles_vs_usage.png"
+ggsave(img, p)
+knitr::include_graphics(img)
+```
+
 
 ```{r, echo=FALSE}
 # plot_bills_vs_usage(df_final_bill, start, end, interval)
@@ -312,9 +335,6 @@ Average water rates history:
 ## Calculate Efficiency
 Load suppliers report info and join with the Utilities list from the OWRS files
 ```{r, echo=FALSE}
-# get pswid
-merged_OWRS <- merge(df_OWRS, supplier_pwsid, by.x = "utility_name_supplier_report", by.y = "Agency_Name", 
-                     all.x=TRUE, all.y=FALSE)
 # merge with suplier report
 merged_OWRS <- merge(merged_OWRS, supplier_reports, by.x = "PWSID", by.y = "report_pwsid", all.x=TRUE, all.y=FALSE)
 
@@ -360,15 +380,38 @@ df_final_bill_single <- assign_fuzzy_match_names(df_final_bill_single,
                                            names_to_match_with = supplier_pwsid$Agency_Name,
                                            manual_map = owrs_to_supplier_report_manual_map)
 
-df_final_bill_single <- merge(df_final_bill_single, supplier_pwsid, by.x = "utility_name_supplier_report", by.y = "Agency_Name", all.x=TRUE, all.y=FALSE)
+# df_final_bill_single <- merge(df_final_bill_single, supplier_pwsid, by.x = "utility_name_supplier_report", by.y = "Agency_Name", all.x=TRUE, all.y=FALSE)
 
 
 #merge on PWSID, month and Year
 eff_vs_rate <- merge(df_final_bill_single, merged_OWRS, 
-                     by.x = c("PWSID", "usage_month", "usage_year"),
-                     by.y = c("PWSID", "report_month", "report_year"),
+                     by.x = c("utility_name_supplier_report", "usage_month", "usage_year"),
+                     by.y = c("utility_name_supplier_report", "report_month", "report_year"),
                      all.x=TRUE, all.y=FALSE)
 ```
+
+
+
+
+```{r boxplot_bill_by_region, echo=FALSE, message=FALSE, warning=FALSE, out.width="600px"}
+p <- boxplot_bill_by_region(eff_vs_rate)
+
+img <- "img/boxplot_bill_by_region.png"
+ggsave(img, p)
+knitr::include_graphics(img)
+```
+
+
+```{r average_bill_part_by_region, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
+
+p <- barchart_average_charge_by_region(eff_vs_rate)
+
+img <- "img/average_bill_part_by_region.png"
+ggsave(img, p)
+knitr::include_graphics(img)
+```
+
+
 
 Scatter plot of Efficiency (pct_above_target) vs Rates (Total Bill for 15 CCF)
 ```{r efficiency_goal_vs_total_bill_scatter_trend, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
@@ -412,11 +455,11 @@ knitr::include_graphics(img)
 ```
 
 ```{r fixed_cost_percentage_histogram, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
-chart_count <- nrow(quali_survey %>% filter(!is.na(costs_pct_fixed)))
+# chart_count <- nrow(quali_survey %>% filter(!is.na(costs_pct_fixed)))
 p <- ggplot(quali_survey, aes(costs_pct_fixed)) + geom_histogram(bins = 10) +
   xlab("Fixed Costs Percentage")+
   ylab("Count of Districts") +
-  ggtitle("Distribution of Fixed Costs", subtitle = paste(chart_count,"Districts Total"))+
+  ggtitle("Distribution of Fixed Costs")+#, subtitle = paste(chart_count,"Districts Total"))+
   theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 20),
         legend.position = "none")
 
@@ -428,11 +471,11 @@ knitr::include_graphics(img)
 
 
 ```{r fixed_revenue_percentage_histogram, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
-chart_count <- nrow(quali_survey %>% filter(!is.na(rev_pct_fixed)))
+# chart_count <- nrow(quali_survey %>% filter(!is.na(rev_pct_fixed)))
 p <- ggplot(quali_survey, aes(rev_pct_fixed)) + geom_histogram(bins = 10) +
   xlab("Fixed Revenue Percentage")+
   ylab("Count of Districts") +
-  ggtitle("Distribution of Fixed Revenue", subtitle = paste(chart_count,"Districts Total"))+
+  ggtitle("Distribution of Fixed Revenue")+#, subtitle = paste(chart_count,"Districts Total"))+
   theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 20),
         legend.position = "none")
 
@@ -444,12 +487,12 @@ knitr::include_graphics(img)
 ```{r fixed_costs_vs_fixed_rev_scatter, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
 quali_survey$fixedRev_per_fixedCosts <- quali_survey$rev_pct_fixed / quali_survey$costs_pct_fixed
 
-chart_count <- nrow(quali_survey %>% filter(!is.na(costs_pct_fixed)&!is.na(rev_pct_fixed)))
+# chart_count <- nrow(quali_survey %>% filter(!is.na(costs_pct_fixed)&!is.na(rev_pct_fixed)))
 
 p <- ggplot(quali_survey, aes(x=costs_pct_fixed, y=rev_pct_fixed)) + geom_point() +
   xlab("Fixed Cost Percentage")+
   ylab("Fixed Revenue Percentage") +
-  ggtitle("Fixed Revenue vs. Fixed Costs", subtitle = paste(chart_count,"Districts Total"))+
+  ggtitle("Fixed Revenue vs. Fixed Costs")+#, subtitle = paste(chart_count,"Districts Total"))+
   theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 20),
         legend.position = "none")
 

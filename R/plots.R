@@ -107,6 +107,22 @@ plot_rate_type_pie <- function(df){
 }
 
 
+plot_usage_histogram <- function(df){
+  filtered <- df %>% #filter(usage_ccf == demo_ccf) %>%
+    distinct(utility_name, .keep_all=TRUE)
+  
+  p <- ggplot(filtered, aes(x=usage_ccf)) +
+    geom_histogram(binwidth=5, colour="black", fill="white")+
+    labs(x = "Usage Benchmark (CCF)", y = "Count of Districts")+
+    ggtitle(paste("Distribution of Usage Benchmarks"))+
+    scale_y_continuous(expand = c(0,0))+
+    theme(axis.title.x = element_text(size = 15), axis.title.y = element_text(size = 15),
+          axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10),
+          title = element_text(size = 15)) +
+    geom_vline(xintercept = mean(filtered$usage_ccf), color = "red")
+  
+  p
+}
 
 plot_ratio_histogram <- function(df){
   filtered <- df %>% #filter(usage_ccf == demo_ccf) %>%
@@ -119,7 +135,7 @@ plot_ratio_histogram <- function(df){
     scale_y_continuous(expand = c(0,0))+
     theme(axis.title.x = element_text(size = 15), axis.title.y = element_text(size = 15),
           axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10),
-          title = element_text(size = 12)) +
+          title = element_text(size = 15)) +
     geom_vline(xintercept = mean(filtered$percentFixed), color = "red") + theme_economist()
   
   ratio_histogram
@@ -158,6 +174,25 @@ plot_commodity_charges_vs_usage <- function(df, start, end, interval){
   commodity_scatter
 }
 
+plot_bill_quantiles_vs_usage <- function(df){
+  df <- df %>% group_by(usage_ccf) %>%
+    summarise(percentile_95=quantile (bill, probs=0.95),
+              percentile_75=quantile (bill, probs=0.75),
+              percentile_50=quantile (bill, probs=0.50),
+              percentile_25=quantile (bill, probs=0.25),
+              percentile_05=quantile (bill, probs=0.05)) %>%
+    tidyr::gather(key="percentile", value="value", percentile_95, percentile_75, percentile_50, percentile_25, percentile_05)
+  
+  p <- ggplot(df, aes(x=usage_ccf, y=value, color=percentile)) +
+    #geom_point(shape=1) +
+    geom_line() +
+    labs(x = "Usage CCF", y = "Total Bill ($)", color = "Percentile") +
+    ggtitle("Total Bill Percentiles", subtitle = paste("At every", interval, "CCF from", start, "to", end)) +
+    theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 20))
+  
+  p
+}
+
 plot_bills_vs_usage <- function(df, start, end, interval){
   bill_scatter <- ggplot(df_final_bill, aes(x=usage_ccf, y=bill, color=utility_name)) +
     #geom_point(shape=1) +
@@ -180,6 +215,59 @@ boxplot_bills_vs_usage <- function(df, start, end, interval){
           legend.position = "none")
   
   bill_box
+}
+
+boxplot_bill_by_region <- function(df){
+  df <- df %>% filter(is.na(report_hydrologic_region)==FALSE)
+  
+  medians <- df %>% group_by(report_hydrologic_region) %>% 
+    summarise(median_bill=median(bill), counts = n()) %>%
+    arrange(median_bill) %>%
+    mutate(report_hydrologic_region = factor(report_hydrologic_region, levels = report_hydrologic_region))
+  
+  df <- df %>% mutate(report_hydrologic_region = factor(report_hydrologic_region, levels = medians$report_hydrologic_region))
+  
+  
+  p1 <- ggplot(df, aes(x=report_hydrologic_region, y=bill, group=report_hydrologic_region)) +
+    geom_boxplot()  + coord_flip() + 
+    scale_x_discrete(name = "Hydrologic Region") +
+    scale_y_continuous(name = "Total Bill (Dollars)", limits = c(0,200)) +
+    # ggtitle("Total Bill Vs. Usage", subtitle = paste("At every", interval, "CCF from", start, "to", end))+
+    theme(axis.text.x = element_text(size = 14), axis.text.y = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 25),
+          legend.position = "none") 
+  
+  
+  p2 <- ggplot(medians, aes(report_hydrologic_region, counts)) + 
+    geom_col(fill="lightgrey") + geom_text(aes(label=counts)) +coord_flip() +
+    scale_y_continuous(name = "# Districts") +
+    theme(axis.title.y=element_blank(),
+          axis.text.y=element_blank(),
+          axis.ticks.y=element_blank(),
+          axis.text.x = element_text(size = 14),
+          axis.title = element_text(size = 20))
+  
+  plot_grid(p1, p2, align = "h", nrow = 1, rel_widths = c(3/4, 1/4))
+}
+
+
+barchart_average_charge_by_region <- function(df){
+  
+  df <- df %>% group_by(report_hydrologic_region) %>%
+    filter(is.na(report_hydrologic_region)==FALSE) %>%
+    summarise("Average Service Charge" = mean(service_charge, na.rm = TRUE),
+              "Average Variable Charge" = mean(commodity_charge, na.rm = TRUE)) %>% 
+    mutate(total_bill = `Average Service Charge` + `Average Variable Charge`) %>%
+    arrange(total_bill) %>%
+    mutate(report_hydrologic_region = factor(report_hydrologic_region, levels=report_hydrologic_region)) %>%
+    tidyr::gather(key="Charge", "mean_amount", "Average Service Charge", "Average Variable Charge")
+  
+  p <- ggplot(df, aes(x=report_hydrologic_region, y=mean_amount, fill=Charge)) +
+    geom_col() + coord_flip() +
+    labs(y="Average Charge", x="Hydrologic Region") +
+    theme(axis.text.x = element_text(size = 14), axis.text.y = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 20),
+          legend.position = "bottom")
+  
+  p
 }
 
 

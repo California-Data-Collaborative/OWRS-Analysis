@@ -31,15 +31,6 @@ This report provides the combined analysis of data from 4 different sources:
 
 
 
-```r
-df_past_years$utility_name_raftelis <- sapply(df_past_years$Water.Service.Provider, preprocess_raftelis_name) 
-df_past_years <- assign_fuzzy_match_names(df_past_years, 
-                                          source_column_name = "utility_name_raftelis",
-                                          new_name_column = "utility_name_owrs",
-                                          names_to_match_with = df_final_bill_single$utility_name,
-                                          manual_map = NULL,
-                                          cutoff = 0.85)
-```
 
 
 
@@ -63,6 +54,9 @@ This section discusses general characteristics of the rates for utilities analyz
 <img src="img/rate_structure_type_pie.png" width="600px" />
 
 
+<img src="img/usage_histogram.png" width="600px" />
+
+Testing a different plot theme:
 
 <img src="img/service_charge_ratio_histogram.png" width="600px" />
 
@@ -71,6 +65,10 @@ This section discusses general characteristics of the rates for utilities analyz
 # Variation in Bills at Different Use Levels
 
 <img src="img/commodity_charge_vs_usage_line.png" width="600px" />
+
+
+<img src="img/bill_quantiles_vs_usage.png" width="600px" />
+
 
 
 
@@ -94,6 +92,16 @@ Load suppliers report info and join with the Utilities list from the OWRS files
 
 <img src="img/gpcd_time_series_boxplot.png" width="600px" />
 ## Compare Rates and efficiency
+
+
+
+
+
+<img src="img/boxplot_bill_by_region.png" width="600px" />
+
+
+<img src="img/average_bill_part_by_region.png" width="600px" />
+
 
 
 Scatter plot of Efficiency (pct_above_target) vs Rates (Total Bill for 15 CCF)
