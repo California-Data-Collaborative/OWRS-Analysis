@@ -371,6 +371,7 @@ ggsave(img, p)
 knitr::include_graphics(img)
 ```
 ## Compare Rates and efficiency
+
 ```{r, echo=FALSE}
 
 
@@ -413,7 +414,7 @@ knitr::include_graphics(img)
 
 
 
-Scatter plot of Efficiency (pct_above_target) vs Rates (Total Bill for 15 CCF)
+
 ```{r efficiency_goal_vs_total_bill_scatter_trend, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
 p <- plot_eff_vs_bill(eff_vs_rate)
 

@@ -97,6 +97,7 @@ Load suppliers report info and join with the Utilities list from the OWRS files
 
 
 
+
 <img src="img/boxplot_bill_by_region.png" width="600px" />
 
 
@@ -104,7 +105,7 @@ Load suppliers report info and join with the Utilities list from the OWRS files
 
 
 
-Scatter plot of Efficiency (pct_above_target) vs Rates (Total Bill for 15 CCF)
+
 <img src="img/efficiency_goal_vs_total_bill_scatter_trend.png" width="600px" />
 
 

@@ -307,7 +307,7 @@ plot_gpcd_ts <- function(df){
     geom_boxplot()  +
     scale_x_date(name = "")+
     scale_y_continuous(name = "Residential GPCD (calculated)") +
-    ggtitle("Residential GPCD of all Districts", subtitle = paste(nrow(df),"Districts Total"))+
+    ggtitle("Residential GPCD of all Districts")+
     theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 20),
           legend.position = "none")
   
