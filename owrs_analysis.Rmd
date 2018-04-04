@@ -22,6 +22,12 @@ library(grid)
 library(gridExtra)
 library(cowplot)
 library(ggthemes)
+
+cadc_red <- "#AA3939"
+cadc_blue <- "#758AA8"
+cadc_yellow <- "#D4BE6A"
+
+cadc_lightblue <- "#D5DCE8"
 ```
 
 # Introduction
@@ -152,16 +158,82 @@ df_final_bill <- tbl_df(df_bill) %>% filter(!is.na(bill)) %>%
 #End
 
 # Customized benchmark
-df_final_bill_single <- df_final_bill %>% filter(is_single == TRUE)
+df_final_bill_customized <- df_final_bill %>% filter(is_single == TRUE)
 df_final_bill <- df_final_bill %>% filter(is_single == FALSE)
-
 # Global 15 CCF benchmark
-# df_final_bill <- df_final_bill %>% filter(is_single == FALSE)
-# df_final_bill_single <- df_final_bill %>% filter(usage_ccf == singleTargetValue)
+df_final_bill_15 <- df_final_bill %>% filter(usage_ccf == singleTargetValue)
+
+df_final_bill_single <- df_final_bill_customized
+```
+
+Load suppliers report info and join with the Utilities list from the OWRS files
+```{r, echo=FALSE}
+# merge with suplier report
+merged_OWRS <- merge(merged_OWRS, supplier_reports, by.x = "PWSID", by.y = "report_pwsid", all.x=TRUE, all.y=FALSE)
+
+#The standard value for GPCD is assumed 55
+target_gpcd <- 55
+ET_adj_factor <- 0.8
+unit_conversion <- 0.62
+
+merged_OWRS$production_target <- 55 * merged_OWRS$report_population * merged_OWRS$report_days_in_month +
+  merged_OWRS$report_irr_area_sf * merged_OWRS$report_eto * ET_adj_factor * unit_conversion
+
+merged_OWRS$residential_use <- merged_OWRS$report_production_calculated * merged_OWRS$report_percent_residential
+
+merged_OWRS$pct_above_target <- (merged_OWRS$residential_use / merged_OWRS$production_target) - 1
+
+merged_OWRS$report_monthyear <- as.Date(paste('01', as.character(merged_OWRS$report_month),
+                                              as.character(merged_OWRS$report_year)), "%d %m %Y")
+```
+
+
+```{r, echo=FALSE}
+# Initialize income data
+
+# Create an ordering for the factor levels
+income_cats = c("$15,000 to $19,999", "$20,000 to $24,999",   
+"$25,000 to $29,999", "$30,000 to $34,999", "$35,000 to $39,999", "$40,000 to $44,999", 
+"$45,000 to $49,999", "$50,000 to $59,999", "$60,000 to $74,999", "$75,000 to $99,999",
+"$100,000 to $124,999", "$125,000 to $149,999", "$150,000 to $199,999", "$200,000 or more")
+
+# Assume a numeric representation for each factor level
+income_placeholders = c(17500, 22500, 27500, 32500, 37500, 42500, 
+47500, 55000, 67500, 87500, 112500, 137500, 17500, 200000)
+
+# Relate the factor level with its numeric assumtion in a dataframe
+df_income_levels = data.frame(list("median_category"=income_cats, "income_placeholder"=income_placeholders)) %>%
+  mutate(median_category = factor(median_category, levels = income_cats, ordered = TRUE))
+
+district_income <- read.csv("Demographics_by_Water_District/Census_Data/Water_District_Income_2017.csv") %>%
+  select(report_pwsid, report_agency_name, Medium, Medium_val) %>%
+  rename(median_category = Medium, median_percentile = Medium_val) %>%
+  distinct() %>%
+  mutate(median_category = factor(median_category, levels = income_cats, ordered = TRUE))
+```
+
+```{r, echo=FALSE, warning=FALSE}
+# Initialize qualitative data
+
+#read the survey data in
+hd <- read.csv('data/2017 CA-NV Rate Survey.csv', nrows=2, header=FALSE, stringsAsFactors = FALSE)
+quali_survey <- read.csv('data/2017 CA-NV Rate Survey.csv', skip=2, header=FALSE, stringsAsFactors = FALSE)
+names(quali_survey) <- paste(hd[1,], hd[2,], sep = "#")
+names(quali_survey)[36] <- "costs_pct_fixed"
+names(quali_survey)[37] <- "rev_pct_fixed"
+names(quali_survey)[10] <- "agency_name"
+names(quali_survey)[5] <- "IP_address"
+names(quali_survey)[14] <- "city-town"
+
+quali_survey$costs_pct_fixed <- as.numeric(quali_survey$costs_pct_fixed)
+quali_survey$rev_pct_fixed <- as.numeric(quali_survey$rev_pct_fixed)
+quali_survey$fixedRev_per_fixedCosts <- quali_survey$rev_pct_fixed / quali_survey$costs_pct_fixed
 ```
 
 
 ```{r past_years_data, echo=FALSE}
+# Initialize historical data from previous surveys
+
 df_past_years <- read.csv("data/raftelis_rate_surveys.csv", stringsAsFactors = FALSE)
 
 cross_year_fixed <- df_past_years %>% 
@@ -205,7 +277,14 @@ cross_year_rate_type_filtered <- cross_year_rate_type %>%
   filter(!is.na(Survey.Year.2013)&!is.na(Survey.Year.2015))
 ```
 
-```{r, echo=FALSE}
+
+# Analysis Using Customized Usage Benchmarks from Supplier Report
+
+
+```{r, echo=FALSE, warning=FALSE}
+df_final_bill_single <- df_final_bill_customized
+
+
 df_past_years$utility_name_raftelis <- sapply(df_past_years$Water.Service.Provider, preprocess_raftelis_name) 
 df_past_years <- assign_fuzzy_match_names(df_past_years, 
                                           source_column_name = "utility_name_raftelis",
@@ -213,11 +292,33 @@ df_past_years <- assign_fuzzy_match_names(df_past_years,
                                           names_to_match_with = df_final_bill_single$utility_name,
                                           manual_map = NULL,
                                           cutoff = 0.85)
+
+
+df_final_bill_single <- assign_fuzzy_match_names(df_final_bill_single, 
+                                          source_column_name = "utility_name",
+                                          new_name_column = "utility_name_supplier_report",
+                                           names_to_match_with = supplier_pwsid$Agency_Name,
+                                           manual_map = owrs_to_supplier_report_manual_map)
+
+# df_final_bill_single <- merge(df_final_bill_single, supplier_pwsid, by.x = "utility_name_supplier_report", by.y = "Agency_Name", all.x=TRUE, all.y=FALSE)
+
+
+#merge on PWSID, month and Year
+eff_vs_rate <- merge(df_final_bill_single, merged_OWRS, 
+                     by.x = c("utility_name_supplier_report", "usage_month", "usage_year"),
+                     by.y = c("utility_name_supplier_report", "report_month", "report_year"),
+                     all.x=TRUE, all.y=FALSE)
+
+
+df_rates_income <- eff_vs_rate %>% left_join(district_income, by=c('PWSID'='report_pwsid')) %>%
+  filter(is.na(median_category)==FALSE) %>%
+  left_join(df_income_levels, by="median_category" ) %>%
+  mutate(bill_over_income = bill / income_placeholder,
+         bill_over_monthly_income = bill / (income_placeholder/12) )
 ```
 
 
-
-# Summary Statistics
+## Summary Statistics
 
 This section discusses general characteristics of the rates for utilities analyzed in this survey.
 
@@ -244,7 +345,6 @@ mean_bill_pie_cap <- fig_nums(name='mean_bill_pie', caption= 'Average bill by pa
 ```
 
 
-
 ```{r rate_structure_type_pie, echo=FALSE, message=FALSE, out.width="600px"}
 p <- plot_rate_type_pie(df_final_bill_single)
 
@@ -262,7 +362,6 @@ ggsave(img, p)
 knitr::include_graphics(img)
 ```
 
-Testing a different plot theme:
 
 ```{r service_charge_ratio_histogram, echo=FALSE, message=FALSE, out.width="600px"}
 # meanpercentFixed <- round(mean(as.numeric(df_final_bill$percentFixed[df_final_bill$usage_ccf == singleTargetValue])), 3)
@@ -283,17 +382,7 @@ ggsave(img, p)
 knitr::include_graphics(img)
 ```
 
-# Variation in Bills at Different Use Levels
-
-```{r commodity_charge_vs_usage_line, echo=FALSE, message=FALSE, out.width="600px"}
-
-p <- plot_commodity_charges_vs_usage(df_final_bill, start, end, interval)
-
-img <- "img/commodity_charge_vs_usage_line.png"
-ggsave(img, p)
-knitr::include_graphics(img)
-```
-
+## Variation in Bills at Different Use Levels
 
 ```{r bill_quantiles_vs_usage, echo=FALSE, message=FALSE, out.width="600px"}
 p <- plot_bill_quantiles_vs_usage(df_final_bill)
@@ -304,16 +393,7 @@ knitr::include_graphics(img)
 ```
 
 
-```{r, echo=FALSE}
-# plot_bills_vs_usage(df_final_bill, start, end, interval)
-```
-
 ```{r commodity_charge_vs_usage_boxplot, echo=FALSE, message=FALSE, out.width="600px"}
-
-# png(filename='plots/boxplot_bills.png',  width = 700, height = 432, units = "px")
-# plot(boxplot_bills_vs_usage(df_final_bill, start, end, interval))
-# dev.off()
-
 p <- boxplot_bills_vs_usage(df_final_bill, start, end, interval)
 
 img <- "img/commodity_charge_vs_usage_boxplot.png"
@@ -322,38 +402,7 @@ knitr::include_graphics(img)
 ```
 
 
-
-
-# Interaction between Rates and Efficiency
-## Define Period of Analysis
-Average water rates history:
-```{r, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
-#plot_avg_price_history(df_final_bill)
-```
-
-
-## Calculate Efficiency
-Load suppliers report info and join with the Utilities list from the OWRS files
-```{r, echo=FALSE}
-# merge with suplier report
-merged_OWRS <- merge(merged_OWRS, supplier_reports, by.x = "PWSID", by.y = "report_pwsid", all.x=TRUE, all.y=FALSE)
-
-#The standard value for GPCD is assumed 55
-target_gpcd <- 55
-ET_adj_factor <- 0.8
-unit_conversion <- 0.62
-
-merged_OWRS$production_target <- 55 * merged_OWRS$report_population * merged_OWRS$report_days_in_month +
-  merged_OWRS$report_irr_area_sf * merged_OWRS$report_eto * ET_adj_factor * unit_conversion
-
-merged_OWRS$residential_use <- merged_OWRS$report_production_calculated * merged_OWRS$report_percent_residential
-
-merged_OWRS$pct_above_target <- (merged_OWRS$residential_use / merged_OWRS$production_target) - 1
-
-merged_OWRS$report_monthyear <- as.Date(paste('01', as.character(merged_OWRS$report_month),
-                                              as.character(merged_OWRS$report_year)), "%d %m %Y")
-```
-
+## Interaction between Rates and Efficiency
 
 ```{r efficiency_goal_time_series_boxplot, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
 p <- plot_efficiency_ts(merged_OWRS)
@@ -363,6 +412,7 @@ ggsave(img, p)
 knitr::include_graphics(img)
 ```
 
+
 ```{r gpcd_time_series_boxplot, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
 p <- plot_gpcd_ts(merged_OWRS)
 
@@ -370,28 +420,6 @@ img <- "img/gpcd_time_series_boxplot.png"
 ggsave(img, p)
 knitr::include_graphics(img)
 ```
-## Compare Rates and efficiency
-
-```{r, echo=FALSE}
-
-
-df_final_bill_single <- assign_fuzzy_match_names(df_final_bill_single, 
-                                          source_column_name = "utility_name",
-                                          new_name_column = "utility_name_supplier_report",
-                                           names_to_match_with = supplier_pwsid$Agency_Name,
-                                           manual_map = owrs_to_supplier_report_manual_map)
-
-# df_final_bill_single <- merge(df_final_bill_single, supplier_pwsid, by.x = "utility_name_supplier_report", by.y = "Agency_Name", all.x=TRUE, all.y=FALSE)
-
-
-#merge on PWSID, month and Year
-eff_vs_rate <- merge(df_final_bill_single, merged_OWRS, 
-                     by.x = c("utility_name_supplier_report", "usage_month", "usage_year"),
-                     by.y = c("utility_name_supplier_report", "report_month", "report_year"),
-                     all.x=TRUE, all.y=FALSE)
-```
-
-
 
 
 ```{r boxplot_bill_by_region, echo=FALSE, message=FALSE, warning=FALSE, out.width="600px"}
@@ -413,8 +441,6 @@ knitr::include_graphics(img)
 ```
 
 
-
-
 ```{r efficiency_goal_vs_total_bill_scatter_trend, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
 p <- plot_eff_vs_bill(eff_vs_rate)
 
@@ -423,26 +449,8 @@ ggsave(img, p)
 knitr::include_graphics(img)
 ```
 
-
-
 ## Joining Data from the Qualitative Survey
-```{r, echo=FALSE, warning=FALSE}
-#read the survey data in
-hd <- read.csv('data/2017 CA-NV Rate Survey.csv', nrows=2, header=FALSE, stringsAsFactors = FALSE)
-quali_survey <- read.csv('data/2017 CA-NV Rate Survey.csv', skip=2, header=FALSE, stringsAsFactors = FALSE)
-names(quali_survey) <- paste(hd[1,], hd[2,], sep = "#")
-names(quali_survey)[36] <- "costs_pct_fixed"
-names(quali_survey)[37] <- "rev_pct_fixed"
-names(quali_survey)[10] <- "agency_name"
-names(quali_survey)[5] <- "IP_address"
-names(quali_survey)[14] <- "city-town"
 
-quali_survey$costs_pct_fixed <- as.numeric(quali_survey$costs_pct_fixed)
-quali_survey$rev_pct_fixed <- as.numeric(quali_survey$rev_pct_fixed)
-
-```
-
-Scatter plot of Efficiency vs Rates Structure (% Fixed  - for 15 CCF)
 ```{r efficiency_goal_vs_percent_fixed_scatter_trend, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
 agg_eff_vs_rate <- eff_vs_rate[c("PWSID", "usage_month", "usage_year",
                                  "bill", "pct_above_target")] %>% na.omit() %>%
@@ -457,12 +465,7 @@ knitr::include_graphics(img)
 
 ```{r fixed_cost_percentage_histogram, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
 # chart_count <- nrow(quali_survey %>% filter(!is.na(costs_pct_fixed)))
-p <- ggplot(quali_survey, aes(costs_pct_fixed)) + geom_histogram(bins = 10) +
-  xlab("Fixed Costs Percentage")+
-  ylab("Count of Districts") +
-  ggtitle("Distribution of Fixed Costs")+#, subtitle = paste(chart_count,"Districts Total"))+
-  theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 20),
-        legend.position = "none")
+p <- plot_fixed_costs_percentage_histogram(quali_survey)
 
 img <- "img/fixed_cost_percentage_histogram.png"
 ggsave(img, p)
@@ -470,36 +473,215 @@ knitr::include_graphics(img)
 ```
 
 
-
 ```{r fixed_revenue_percentage_histogram, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
 # chart_count <- nrow(quali_survey %>% filter(!is.na(rev_pct_fixed)))
-p <- ggplot(quali_survey, aes(rev_pct_fixed)) + geom_histogram(bins = 10) +
-  xlab("Fixed Revenue Percentage")+
-  ylab("Count of Districts") +
-  ggtitle("Distribution of Fixed Revenue")+#, subtitle = paste(chart_count,"Districts Total"))+
-  theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 20),
-        legend.position = "none")
+
+p <- plot_fixed_costs_percentage_histogram(quali_survey)
+
 
 img <- "img/fixed_revenue_percentage_histogram.png"
 ggsave(img, p)
 knitr::include_graphics(img)
 ```
 
-```{r fixed_costs_vs_fixed_rev_scatter, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
-quali_survey$fixedRev_per_fixedCosts <- quali_survey$rev_pct_fixed / quali_survey$costs_pct_fixed
 
+```{r fixed_costs_vs_fixed_rev_scatter, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
 # chart_count <- nrow(quali_survey %>% filter(!is.na(costs_pct_fixed)&!is.na(rev_pct_fixed)))
 
-p <- ggplot(quali_survey, aes(x=costs_pct_fixed, y=rev_pct_fixed)) + geom_point() +
-  xlab("Fixed Cost Percentage")+
-  ylab("Fixed Revenue Percentage") +
-  ggtitle("Fixed Revenue vs. Fixed Costs")+#, subtitle = paste(chart_count,"Districts Total"))+
-  theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 20),
-        legend.position = "none")
+p <- plot_fixed_costs_vs_fixed_rev_scatter(quali_survey)
 
 img <- "img/fixed_costs_vs_fixed_rev_scatter.png"
 ggsave(img, p)
 knitr::include_graphics(img)
 ```
+
+## Affordability
+
+```{r income_bracket_barchart, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px" }
+p <- income_bracket_barchart(df_rates_income)
+
+img <- "img/income_bracket_barchart.png"
+ggsave(img, p)
+knitr::include_graphics(img)
+```
+
+
+```{r, affordability_histogram, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
+p <- plot_affordability_histogram(df_rates_income)
+
+img <- "img/affordability_histogram.png"
+ggsave(img, p)
+knitr::include_graphics(img)
+```
+
+
+```{r bill_vs_income_scatter, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
+p <- plot_bill_vs_income_scatter(df_rates_income)
+
+img <- "img/bill_vs_income_scatter.png"
+ggsave(img, p)
+knitr::include_graphics(img)
+```
+
+
+
+
+# Analysis Using 15 CCF Usage Benchmark for comparison with previous years
+
+
+```{r, echo=FALSE, warning=FALSE}
+df_final_bill_single <- df_final_bill_15
+
+
+df_past_years$utility_name_raftelis <- sapply(df_past_years$Water.Service.Provider, preprocess_raftelis_name) 
+df_past_years <- assign_fuzzy_match_names(df_past_years, 
+                                          source_column_name = "utility_name_raftelis",
+                                          new_name_column = "utility_name_owrs",
+                                          names_to_match_with = df_final_bill_single$utility_name,
+                                          manual_map = NULL,
+                                          cutoff = 0.85)
+
+
+df_final_bill_single <- assign_fuzzy_match_names(df_final_bill_single, 
+                                          source_column_name = "utility_name",
+                                          new_name_column = "utility_name_supplier_report",
+                                           names_to_match_with = supplier_pwsid$Agency_Name,
+                                           manual_map = owrs_to_supplier_report_manual_map)
+
+# df_final_bill_single <- merge(df_final_bill_single, supplier_pwsid, by.x = "utility_name_supplier_report", by.y = "Agency_Name", all.x=TRUE, all.y=FALSE)
+
+
+#merge on PWSID, month and Year
+eff_vs_rate <- merge(df_final_bill_single, merged_OWRS, 
+                     by.x = c("utility_name_supplier_report", "usage_month", "usage_year"),
+                     by.y = c("utility_name_supplier_report", "report_month", "report_year"),
+                     all.x=TRUE, all.y=FALSE)
+
+
+df_rates_income <- eff_vs_rate %>% left_join(district_income, by=c('PWSID'='report_pwsid')) %>%
+  filter(is.na(median_category)==FALSE) %>%
+  left_join(df_income_levels, by="median_category" ) %>%
+  mutate(bill_over_income = bill / income_placeholder,
+         bill_over_monthly_income = bill / (income_placeholder/12) )
+```
+
+
+## Summary Statistics
+
+This section discusses general characteristics of the rates for utilities analyzed in this survey.
+
+
+```{r mean_bill_by_parts_pie_15, echo=FALSE, message=FALSE, out.width="600px", fig.cap = mean_bill_pie_cap}
+p <- plot_mean_bill_pie(df_final_bill_single)
+
+img <- "img/15ccf/mean_bill_by_parts_pie_15.png"
+ggsave(img, p)
+knitr::include_graphics(img)
+
+mean_bill_pie_cap <- fig_nums(name='mean_bill_pie', caption= 'Average bill by parts for all agencies, considering a consumption of 10 CCF in a month. The average total bill is $60.68. With an average service charge (fixed) of $24.63 (40.6%) and an average commodity charge (variable) of $35.61 (58.7%).')
+```
+
+
+```{r service_charge_ratio_histogram_15, echo=FALSE, message=FALSE, out.width="600px"}
+# meanpercentFixed <- round(mean(as.numeric(df_final_bill$percentFixed[df_final_bill$usage_ccf == singleTargetValue])), 3)
+
+
+p <- plot_ratio_histogram(df_final_bill_single)
+
+img <- "img/15ccf/service_charge_ratio_histogram_15.png"
+ggsave(img, p)
+knitr::include_graphics(img)
+```
+
+```{r total_bill_histogram_15, echo=FALSE, message=FALSE, out.width="600px"}
+p <- plot_bill_histogram(df_final_bill_single)
+
+img <- "img/15ccf/total_bill_histogram_15.png"
+ggsave(img, p)
+knitr::include_graphics(img)
+```
+
+
+## Interaction between Rates and Efficiency
+
+```{r efficiency_goal_time_series_boxplot_15, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
+p <- plot_efficiency_ts(merged_OWRS)
+
+img <- "img/15ccf/efficiency_goal_time_series_boxplot_15.png"
+ggsave(img, p)
+knitr::include_graphics(img)
+```
+
+
+```{r gpcd_time_series_boxplot_15, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
+p <- plot_gpcd_ts(merged_OWRS)
+
+img <- "img/15ccf/gpcd_time_series_boxplot_15.png"
+ggsave(img, p)
+knitr::include_graphics(img)
+```
+
+
+```{r boxplot_bill_by_region_15, echo=FALSE, message=FALSE, warning=FALSE, out.width="600px"}
+p <- boxplot_bill_by_region(eff_vs_rate)
+
+img <- "img/15ccf/boxplot_bill_by_region_15.png"
+ggsave(img, p)
+knitr::include_graphics(img)
+```
+
+
+```{r average_bill_part_by_region_15, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
+
+p <- barchart_average_charge_by_region(eff_vs_rate)
+
+img <- "img/15ccf/average_bill_part_by_region_15.png"
+ggsave(img, p)
+knitr::include_graphics(img)
+```
+
+
+```{r efficiency_goal_vs_total_bill_scatter_trend_15, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
+p <- plot_eff_vs_bill(eff_vs_rate)
+
+img <- "img/15ccf/efficiency_goal_vs_total_bill_scatter_trend_15.png"
+ggsave(img, p)
+knitr::include_graphics(img)
+```
+
+## Joining Data from the Qualitative Survey
+
+```{r efficiency_goal_vs_percent_fixed_scatter_trend_15, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
+agg_eff_vs_rate <- eff_vs_rate[c("PWSID", "usage_month", "usage_year",
+                                 "bill", "pct_above_target")] %>% na.omit() %>%
+                        group_by(PWSID) %>% summarise_all(funs(mean))
+
+p <- plot_eff_vs_pctFixed(eff_vs_rate)# %>% filter(usage_ccf == singleTargetValue))
+
+img <- "img/15ccf/efficiency_goal_vs_percent_fixed_scatter_trend_15.png"
+ggsave(img, p)
+knitr::include_graphics(img)
+```
+
+
+## Affordability
+
+```{r, affordability_histogram_15, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
+p <- plot_affordability_histogram(df_rates_income)
+
+img <- "img/15ccf/affordability_histogram_15.png"
+ggsave(img, p)
+knitr::include_graphics(img)
+```
+
+
+```{r bill_vs_income_scatter_15, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
+p <- plot_bill_vs_income_scatter(df_rates_income)
+
+img <- "img/15ccf/bill_vs_income_scatter_15.png"
+ggsave(img, p)
+knitr::include_graphics(img)
+```
+
 
 

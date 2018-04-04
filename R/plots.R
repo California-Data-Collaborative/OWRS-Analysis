@@ -112,14 +112,14 @@ plot_usage_histogram <- function(df){
     distinct(utility_name, .keep_all=TRUE)
   
   p <- ggplot(filtered, aes(x=usage_ccf)) +
-    geom_histogram(binwidth=5, colour="black", fill="white")+
+    geom_histogram(binwidth=5, colour="white", fill=cadc_blue)+
     labs(x = "Usage Benchmark (CCF)", y = "Count of Districts")+
     ggtitle(paste("Distribution of Usage Benchmarks"))+
     scale_y_continuous(expand = c(0,0))+
     theme(axis.title.x = element_text(size = 15), axis.title.y = element_text(size = 15),
           axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10),
           title = element_text(size = 15)) +
-    geom_vline(xintercept = mean(filtered$usage_ccf), color = "red")
+    geom_vline(xintercept = mean(filtered$usage_ccf), color = cadc_red)
   
   p
 }
@@ -129,14 +129,14 @@ plot_ratio_histogram <- function(df){
     distinct(utility_name, .keep_all=TRUE)
   
   ratio_histogram <- ggplot(filtered, aes(x=percentFixed)) +
-    geom_histogram(binwidth=.05, colour="black", fill="white")+
+    geom_histogram(binwidth=.05, colour="white", fill=cadc_blue)+
     labs(x = "Proportion of Total Bill", y = "Count of Districts")+
     ggtitle(paste("Fixed Service Charge as Proportion of Total Bill"))+
     scale_y_continuous(expand = c(0,0))+
     theme(axis.title.x = element_text(size = 15), axis.title.y = element_text(size = 15),
           axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10),
           title = element_text(size = 15)) +
-    geom_vline(xintercept = mean(filtered$percentFixed), color = "red") + theme_economist()
+    geom_vline(xintercept = mean(filtered$percentFixed), color = cadc_red) 
   
   ratio_histogram
 }
@@ -146,7 +146,7 @@ plot_bill_histogram <- function(df){
     distinct(utility_name, .keep_all=TRUE)
   
   bill_histogram <- ggplot(filtered, aes(x=bill)) +
-    geom_histogram(binwidth=(max(filtered$bill)- min(filtered$bill))/ round(length(filtered$bill)/10), colour="black", fill="white")+
+    geom_histogram(binwidth=(max(filtered$bill)- min(filtered$bill))/ round(length(filtered$bill)/10), colour="white", fill=cadc_blue)+
     labs(x = "Bill Amount ($)", y = "Count of Districts")+
     ggtitle(paste("Total Bill"))+
     scale_y_continuous(expand = c(0,0))+
@@ -154,7 +154,7 @@ plot_bill_histogram <- function(df){
     theme(axis.title.x = element_text(size = 15), axis.title.y = element_text(size = 15),
           axis.text.x = element_text(size = 15), axis.text.y = element_text(size = 15),
           title = element_text(size = 15)) +
-    geom_vline(xintercept = mean(filtered$bill), color = "red")
+    geom_vline(xintercept = mean(filtered$bill), color = cadc_red)
   
   
   bill_histogram
@@ -176,14 +176,15 @@ plot_commodity_charges_vs_usage <- function(df, start, end, interval){
 
 plot_bill_quantiles_vs_usage <- function(df){
   df <- df %>% group_by(usage_ccf) %>%
-    summarise(percentile_95=quantile (bill, probs=0.95),
-              percentile_75=quantile (bill, probs=0.75),
-              percentile_50=quantile (bill, probs=0.50),
-              percentile_25=quantile (bill, probs=0.25),
-              percentile_05=quantile (bill, probs=0.05)) %>%
-    tidyr::gather(key="percentile", value="value", percentile_95, percentile_75, percentile_50, percentile_25, percentile_05)
+    summarise(p95=quantile (bill, probs=0.95),
+              p75=quantile (bill, probs=0.75),
+              p50=quantile (bill, probs=0.50),
+              p25=quantile (bill, probs=0.25),
+              p05=quantile (bill, probs=0.05)) %>%
+    tidyr::gather(key="percentile", value="value", p95, p75, p50, p25, p05)
   
   p <- ggplot(df, aes(x=usage_ccf, y=value, color=percentile)) +
+    scale_color_manual(values=c(cadc_red, cadc_yellow, cadc_blue, cadc_yellow, cadc_red)) +
     #geom_point(shape=1) +
     geom_line() +
     labs(x = "Usage CCF", y = "Total Bill ($)", color = "Percentile") +
@@ -229,7 +230,7 @@ boxplot_bill_by_region <- function(df){
   
   
   p1 <- ggplot(df, aes(x=report_hydrologic_region, y=bill, group=report_hydrologic_region)) +
-    geom_boxplot()  + coord_flip() + 
+    geom_boxplot(color=cadc_blue)  + coord_flip() + 
     scale_x_discrete(name = "Hydrologic Region") +
     scale_y_continuous(name = "Total Bill (Dollars)", limits = c(0,200)) +
     # ggtitle("Total Bill Vs. Usage", subtitle = paste("At every", interval, "CCF from", start, "to", end))+
@@ -238,7 +239,7 @@ boxplot_bill_by_region <- function(df){
   
   
   p2 <- ggplot(medians, aes(report_hydrologic_region, counts)) + 
-    geom_col(fill="lightgrey") + geom_text(aes(label=counts)) +coord_flip() +
+    geom_col(fill=cadc_lightblue) + geom_text(aes(label=counts)) +coord_flip() +
     scale_y_continuous(name = "# Districts") +
     theme(axis.title.y=element_blank(),
           axis.text.y=element_blank(),
@@ -262,6 +263,7 @@ barchart_average_charge_by_region <- function(df){
     tidyr::gather(key="Charge", "mean_amount", "Average Service Charge", "Average Variable Charge")
   
   p <- ggplot(df, aes(x=report_hydrologic_region, y=mean_amount, fill=Charge)) +
+    scale_fill_manual(values=c(cadc_red, cadc_blue)) +
     geom_col() + coord_flip() +
     labs(y="Average Charge", x="Hydrologic Region") +
     theme(axis.text.x = element_text(size = 14), axis.text.y = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 20),
@@ -322,12 +324,12 @@ plot_eff_vs_bill <- function(df){
   
   eff_vs_bill <- ggplot(df, 
                         aes(x=bill, y=pct_above_target)) +
-    geom_point(shape=1) +
+    geom_point(color=cadc_blue) +
     labs(x = "Total Bill (Dollars)", y = "Efficiency Ratio (Use/Goal)") +
     ggtitle( paste("Efficiency vs Total Bill", subtitle = paste(chart_count,"Districts Total")) )+
     theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 20),
           legend.position = "none")+
-    geom_smooth(method='lm')
+    geom_smooth(method='lm', color=cadc_red, size=0.8)
   eff_vs_bill
   
 }
@@ -338,12 +340,93 @@ plot_eff_vs_pctFixed <- function(df){
   
   eff_vs_pctFixed <- ggplot(df, 
                             aes(x=percentFixed, y=pct_above_target)) +
-    geom_point(shape=1) +
+    geom_point(color=cadc_blue) +
     labs(x = "Percentage of Service Charge in Total Bill", y = "Percent above target") +
     ggtitle("Efficiency vs Percent of Fixed Rate", subtitle = paste(chart_count,"Districts Total"))+
     theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 20),
           legend.position = "none")+
-    geom_smooth(method='lm')
+    geom_smooth(method='lm', color=cadc_red, size=0.8)
   
   eff_vs_pctFixed
+}
+
+plot_fixed_costs_percentage_histogram <- function(df){
+  p <- ggplot(df, aes(costs_pct_fixed)) + 
+    geom_histogram(bins = 10, colour="white", fill=cadc_blue) +
+    xlab("Fixed Costs Percentage")+
+    ylab("Count of Districts") +
+    ggtitle("Distribution of Fixed Costs")+#, subtitle = paste(chart_count,"Districts Total"))+
+    theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 20),
+          legend.position = "none")
+  
+  p
+}
+
+plot_fixed_revenue_percentage_histogram <- function(df){
+  p <- ggplot(df, aes(rev_pct_fixed)) + 
+    geom_histogram(bins = 10, colour="white", fill=cadc_blue) +
+    xlab("Fixed Revenue Percentage")+
+    ylab("Count of Districts") +
+    ggtitle("Distribution of Fixed Revenue")+#, subtitle = paste(chart_count,"Districts Total"))+
+    theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 20),
+          legend.position = "none")
+  
+  p
+}
+
+plot_fixed_costs_vs_fixed_rev_scatter <- function(df){
+  p <- ggplot(df, aes(x=costs_pct_fixed, y=rev_pct_fixed)) + geom_point(color=cadc_blue) +
+    xlab("Fixed Cost Percentage")+
+    ylab("Fixed Revenue Percentage") +
+    ggtitle("Fixed Revenue vs. Fixed Costs")+#, subtitle = paste(chart_count,"Districts Total"))+
+    theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 20),
+          legend.position = "none")
+  
+  p
+}
+
+
+income_bracket_barchart <- function(df){
+  tmp <- df %>% group_by(median_category) %>% summarise(counts=length(median_category))
+  
+  p <- ggplot(tmp, aes(median_category, counts)) + 
+    geom_col(fill=cadc_lightblue) + coord_flip() +
+    geom_text(aes(label=counts)) + 
+    labs(x="Median Income Bracket", y="Count of Districts") +
+    theme(axis.text.x = element_text(size = 14), axis.text.y = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 20))
+  
+  p
+}
+
+plot_affordability_histogram <- function(df){
+  filtered <- df %>%
+    distinct(utility_name, .keep_all=TRUE)
+  
+  p <- ggplot(filtered, aes(x=100*bill_over_income*12)) +
+    geom_histogram(binwidth=.8, colour="white", fill=cadc_blue)+
+    labs(x = "Percent of Median Monthly Household Income", y = "Count of Districts")+
+    ggtitle(paste("July Bill as a Percent of Median Monthly Household Income"))+
+    scale_y_continuous(expand = c(0,0))+
+    theme(axis.title.x = element_text(size = 15), axis.title.y = element_text(size = 15),
+          axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10),
+          title = element_text(size = 15)) +
+    geom_vline(xintercept = mean(100*filtered$bill_over_income*12), color = cadc_red) 
+  
+  p
+}
+
+
+plot_bill_vs_income_scatter <- function(df){
+  tmp <- df %>% distinct(report_pwsid, .keep_all = TRUE)
+  
+  p <- ggplot(tmp, aes(x=income_placeholder, y=bill, color=bill_type)) + 
+    scale_colour_manual(values=c(cadc_red, cadc_blue, cadc_yellow)) +
+    geom_point() + geom_jitter() +
+    geom_abline(intercept = 0, slope = 0.03/12, color='darkgrey') +  # line at 3% of income
+    xlim(0, 150000) +
+    labs(x="Approximate Median Household Income ($)", y="Total Bill at Average Usage ($)", 
+         color="Rate Type", title="Total Bill and Median Annual Household Income",
+         subtitle="Grey line indicates 3% of income used for water") 
+  
+  p
 }

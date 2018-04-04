@@ -27,6 +27,7 @@ This report provides the combined analysis of data from 4 different sources:
 
 
 
+Load suppliers report info and join with the Utilities list from the OWRS files
 
 
 
@@ -34,7 +35,17 @@ This report provides the combined analysis of data from 4 different sources:
 
 
 
-# Summary Statistics
+
+
+
+
+# Analysis Using Customized Usage Benchmarks from Supplier Report
+
+
+
+
+
+## Summary Statistics
 
 This section discusses general characteristics of the rates for utilities analyzed in this survey.
 
@@ -50,52 +61,30 @@ This section discusses general characteristics of the rates for utilities analyz
 </div>
 
 
-
 <img src="img/rate_structure_type_pie.png" width="600px" />
 
 
 <img src="img/usage_histogram.png" width="600px" />
 
-Testing a different plot theme:
 
 <img src="img/service_charge_ratio_histogram.png" width="600px" />
 
 <img src="img/total_bill_histogram.png" width="600px" />
 
-# Variation in Bills at Different Use Levels
-
-<img src="img/commodity_charge_vs_usage_line.png" width="600px" />
-
+## Variation in Bills at Different Use Levels
 
 <img src="img/bill_quantiles_vs_usage.png" width="600px" />
-
-
 
 
 <img src="img/commodity_charge_vs_usage_boxplot.png" width="600px" />
 
 
-
-
-# Interaction between Rates and Efficiency
-## Define Period of Analysis
-Average water rates history:
-
-
-
-## Calculate Efficiency
-Load suppliers report info and join with the Utilities list from the OWRS files
-
-
+## Interaction between Rates and Efficiency
 
 <img src="img/efficiency_goal_time_series_boxplot.png" width="600px" />
 
+
 <img src="img/gpcd_time_series_boxplot.png" width="600px" />
-## Compare Rates and efficiency
-
-
-
-
 
 
 <img src="img/boxplot_bill_by_region.png" width="600px" />
@@ -104,24 +93,82 @@ Load suppliers report info and join with the Utilities list from the OWRS files
 <img src="img/average_bill_part_by_region.png" width="600px" />
 
 
-
-
 <img src="img/efficiency_goal_vs_total_bill_scatter_trend.png" width="600px" />
-
-
 
 ## Joining Data from the Qualitative Survey
 
-
-Scatter plot of Efficiency vs Rates Structure (% Fixed  - for 15 CCF)
 <img src="img/efficiency_goal_vs_percent_fixed_scatter_trend.png" width="600px" />
 
 <img src="img/fixed_cost_percentage_histogram.png" width="600px" />
 
 
-
 <img src="img/fixed_revenue_percentage_histogram.png" width="600px" />
 
+
 <img src="img/fixed_costs_vs_fixed_rev_scatter.png" width="600px" />
+
+## Affordability
+
+<img src="img/income_bracket_barchart.png" width="600px" />
+
+
+<img src="img/affordability_histogram.png" width="600px" />
+
+
+<img src="img/bill_vs_income_scatter.png" width="600px" />
+
+
+
+
+# Analysis Using 15 CCF Usage Benchmark for comparison with previous years
+
+
+
+
+
+## Summary Statistics
+
+This section discusses general characteristics of the rates for utilities analyzed in this survey.
+
+
+<div class="figure">
+<img src="img/15ccf/mean_bill_by_parts_pie_15.png" alt="Figure  2: Average bill by parts for all agencies, considering a consumption of 10 CCF in a month. The average total bill is $60.68. With an average service charge (fixed) of $24.63 (40.6%) and an average commodity charge (variable) of $35.61 (58.7%)." width="600px" />
+<p class="caption">Figure  2: Average bill by parts for all agencies, considering a consumption of 10 CCF in a month. The average total bill is $60.68. With an average service charge (fixed) of $24.63 (40.6%) and an average commodity charge (variable) of $35.61 (58.7%).</p>
+</div>
+
+
+<img src="img/15ccf/service_charge_ratio_histogram_15.png" width="600px" />
+
+<img src="img/15ccf/total_bill_histogram_15.png" width="600px" />
+
+
+## Interaction between Rates and Efficiency
+
+<img src="img/15ccf/efficiency_goal_time_series_boxplot_15.png" width="600px" />
+
+
+<img src="img/15ccf/gpcd_time_series_boxplot_15.png" width="600px" />
+
+
+<img src="img/15ccf/boxplot_bill_by_region_15.png" width="600px" />
+
+
+<img src="img/15ccf/average_bill_part_by_region_15.png" width="600px" />
+
+
+<img src="img/15ccf/efficiency_goal_vs_total_bill_scatter_trend_15.png" width="600px" />
+
+## Joining Data from the Qualitative Survey
+
+<img src="img/15ccf/efficiency_goal_vs_percent_fixed_scatter_trend_15.png" width="600px" />
+
+
+## Affordability
+
+<img src="img/15ccf/affordability_histogram_15.png" width="600px" />
+
+
+<img src="img/15ccf/bill_vs_income_scatter_15.png" width="600px" />
+
 
 
