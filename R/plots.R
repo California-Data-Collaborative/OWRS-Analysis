@@ -1,13 +1,13 @@
 
 
-plot_bill_frequency_piechart <- function(df){
-  df_distint_util <- df %>% distinct(utility_name, bill_frequency)
+plot_bill_frequency_piechart <- function(df, survey_year){
+  df_distint_util <- df #%>% distinct(utility_name, bill_frequency)
   
   NoBiMonthly <- nrow(df_distint_util %>% 
                         filter(bill_frequency %in% c("bimonthly", "Bimonthly", "Bi-Monthly") ))
-  NoMonthly <- nrow(df_distint_util %>% distinct(utility_name, bill_frequency) %>% 
+  NoMonthly <- nrow(df_distint_util %>% 
                       filter(bill_frequency %in% c("monthly", "Monthly")))
-  NoOtherSchedule <- nrow(df_distint_util %>% distinct(utility_name, bill_frequency)) - (NoBiMonthly + NoMonthly)
+  NoOtherSchedule <- nrow(df_distint_util) - (NoBiMonthly + NoMonthly)
   
   if(NoOtherSchedule > 0)
   {
@@ -31,7 +31,7 @@ plot_bill_frequency_piechart <- function(df){
     geom_text(aes(y = rev(Value)/2 + c(0, cumsum(rev(Value))[-length(Value)]), 
                   label = paste(rev(Value), "\n(", percent(rev(Value)/nrow(df_distint_util)), ")", sep="") ), 
                   size=4) +
-    ggtitle("Counts by Bill Frequency")  + 
+    ggtitle(paste("Counts by Bill Frequency", survey_year) )  + 
     theme(plot.title = element_text(lineheight= .5, face="bold")) + 
     labs(fill = "Bill Frequencies")
   
@@ -69,7 +69,7 @@ plot_mean_bill_pie <- function(df){
 }
 
 
-plot_rate_type_pie <- function(df){
+plot_rate_type_pie <- function(df, survey_year){
   df_distint_util <- df %>% distinct(utility_name, bill_type)
   
   noTiered <- nrow(df_distint_util %>% filter(bill_type == "Tiered"))
@@ -99,7 +99,7 @@ plot_rate_type_pie <- function(df){
     geom_text(aes(y = rev(Value)/2 + c(0, cumsum(rev(Value))[-length(Value)]), x=2,
                   label = paste(rev(Value), "\n(", percent(rev(Value)/nrow(df_distint_util)), ")", sep="") ),
                   size=4) +
-    ggtitle("Counts of Rate Structure Types")  + 
+    ggtitle(paste("Counts of Rate Structure Types", survey_year) )  + 
     theme(plot.title = element_text(lineheight=.8, face="bold")) + 
     labs(fill = "Rate Structures")
   
@@ -160,6 +160,18 @@ plot_bill_histogram <- function(df){
   bill_histogram
 }
 
+
+plot_year_comparisons <- function(df, colname){
+  p <- ggplot(df, aes(`Survey Year`, colname)) + 
+    geom_col(fill=cadc_blue) +
+    theme(axis.text.x = element_text(size = 14), axis.text.y = element_text(size = 14), 
+          axis.title = element_text(size = 20), title = element_text(size = 25),
+          legend.position = "none")
+  # + scale_fill_manual(values=c(cadc_blue, cadc_red))  
+  # geom_text(aes(label=`Mean Service Charge`)) 
+  
+  p
+}
 
 
 plot_commodity_charges_vs_usage <- function(df, start, end, interval){

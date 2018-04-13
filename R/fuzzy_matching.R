@@ -26,7 +26,6 @@ assign_fuzzy_match_names <- function(df, source_column_name,
                                               GetCloseMatches,
                                                 sequence_strings =  names_to_match_with, 
                                                 n=1L, cutoff = cutoff))
-  
   if(!is.null(manual_map)){
     manually_mapped_names <- as.character(manual_map[df[[source_column_name]]])
     df[new_name_column] <- ifelse(manually_mapped_names == "NULL", 
@@ -36,6 +35,23 @@ assign_fuzzy_match_names <- function(df, source_column_name,
   
   return(df)
 }
+
+
+
+fuzzy_district_left_join <- function(df1, df2, left_on=NULL, right_on=NULL, new_column_name, cutoff=0.9){
+  common_pattern <- "(water)|(district)|(city)|(of)|(community)|(services?)|(county)|(department)|(csa)|(company)|(,)"
+  df1$simplified <- str_squish(str_remove_all(tolower(df1$utility_name), common_pattern))
+  df2$simplified <- str_squish(str_remove_all(tolower(df2$utility_name), common_pattern))
+  df1$simplified_from_owrs <- as.character(sapply( df1$simplified,
+                                                             GetCloseMatches,
+                                                             sequence_strings =  df2$simplified,
+                                                             n=1L, cutoff = 0.9))
+  df1 <- df1 %>% left_join(df2 %>% select(simplified, utility_name_owrs=utility_name), 
+                                               by=c("simplified_from_owrs"="simplified"))
+  
+  df1
+}
+
 
 preprocess_raftelis_name <- function(s){
   

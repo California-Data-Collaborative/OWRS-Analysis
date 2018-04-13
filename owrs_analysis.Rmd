@@ -22,6 +22,7 @@ library(grid)
 library(gridExtra)
 library(cowplot)
 library(ggthemes)
+library(stringr)
 
 cadc_red <- "#AA3939"
 cadc_blue <- "#758AA8"
@@ -108,7 +109,7 @@ df_OWRS <- df_OWRS %>% group_by(utility_name) %>%
 
 # Join in supplier report
 #load supplier reports, geoinformation and pwsid_record
-supplier_reports <- read.csv('data/supplier_report.csv', stringsAsFactors=FALSE) %>%
+supplier_reports <- read.csv('data/supplier_report2.csv', stringsAsFactors=FALSE) %>%
   mutate(rgpcd = report_production_calculated*report_percent_residential/report_population/report_days_in_month)
 #supplier_geo <- read.csv('data/suppliers.csv', stringsAsFactors=FALSE)
 supplier_pwsid <- read.csv('data/utilities_for_OWRS.csv', stringsAsFactors=FALSE)
@@ -212,6 +213,7 @@ district_income <- read.csv("Demographics_by_Water_District/Census_Data/Water_Di
   mutate(median_category = factor(median_category, levels = income_cats, ordered = TRUE))
 ```
 
+
 ```{r, echo=FALSE, warning=FALSE}
 # Initialize qualitative data
 
@@ -234,48 +236,198 @@ quali_survey$fixedRev_per_fixedCosts <- quali_survey$rev_pct_fixed / quali_surve
 ```{r past_years_data, echo=FALSE}
 # Initialize historical data from previous surveys
 
-df_past_years <- read.csv("data/raftelis_rate_surveys.csv", stringsAsFactors = FALSE)
+df_past_years <- read.csv("data/raftelis_rate_surveys.csv", stringsAsFactors = FALSE) %>%
+  rename(bill_frequency = Billing.Frequency,
+         utility_name = Water.Service.Provider,
+         service_charge = Fixed.Charge,
+         commodity_charge = Commodity.Charge,
+         bill = Total.Charge,
+         bill_type = Rate.Format) %>%
+  mutate(bill_type = ifelse(bill_type=="Inclining", "Tiered", bill_type),
+         bill_type = ifelse(bill_type=="Declining", "Other", bill_type))
+
+df_past_years <- fuzzy_district_left_join(df_past_years, df_final_bill_15)
+
+# raftelis_to_owrs_manual_map <- list(
+#   "Valley Springs Public Utility District" = "",
+#   "City of Pittsburg" = "Pittsburg City Of",
+#   "Lukins Brothers Water Company, Inc." = "",
+#   "Bakman Water Company" = "",
+#   "City of Eureka" = "Eureka City Of",
+#   "City of Calexico" = "",
+#   "City of Bishop" = "",
+#   "Arvin Community Services District" = "",
+#   "Greenfield County Water District" = "",
+#   "Sundale Mutual Water Company" = "",
+#   "Clearlake Oaks County Water District" = "",
+#   "Callayomi County Water District" = "",
+#   "Hilmar County Water District" = "",
+#   "North Tahoe Public Utility District" = "",
+#   "Colton City of " = "",
+#   "City of Colton" = "",
+#   "Hesperia Water District" = "",
+#   "West Valley Water District" = "",
+#   "Yuima Municipal Water District" = "",
+#   "Montecito Water District" = "",
+#   "Santa Maria City of " = "",
+#   "City of Santa Maria" = "",
+#   "Sutter Community Services District" = "",
+#   "Casitas Municipal Water District" = "",
+#   "Westwood Community Services District" = "",
+#   "California Water Service Company" = "",
+#   "Lompico County Water District" = "",
+#   "Oceano Community Services District" = "",
+#   "Nipomo Community Services District" = "",
+#   "Ramona Municipal Water District" = "",
+#   "Rainbow Municipal Water District" = "",
+#   "Otay Water District" = "")
+
+# df_past_years <- assign_fuzzy_match_names(df_past_years, 
+#                                           source_column_name = "utility_name_raftelis",
+#                                           new_name_column = "utility_name_owrs",
+#                                           names_to_match_with = df_final_bill_15$utility_name,
+#                                           manual_map = raftelis_to_owrs_manual_map,
+#                                           cutoff = 0.85)
+# 
+# cross_year_fixed <- df_past_years %>% 
+#   select(Survey.Year, Service.Area, utility_name, utility_name_owrs, service_charge) %>% 
+#   tidyr::spread( key=Survey.Year, value=c(service_charge), sep=".") %>%
+#   arrange(utility_name) %>%
+#   filter(Survey.Year.2013 != "$-") %>%
+#   filter(!is.na(Survey.Year.2013)&!is.na(Survey.Year.2015)) %>%
+#   select(-Survey.Year.NA) %>%
+#   left_join(df_final_bill_15 %>% select(utility_name, service_charge), 
+#             by=c("utility_name_owrs"="utility_name"))
+
 
 cross_year_fixed <- df_past_years %>% 
-  select(Survey.Year, Service.Area, Water.Service.Provider, Fixed.Charge) %>% 
-  tidyr::spread( key=Survey.Year, value=c(Fixed.Charge), sep=".") %>% 
-  arrange(Water.Service.Provider) %>%
-  filter(Survey.Year.2013 != "$-")
+  select(Survey.Year, Service.Area, utility_name, utility_name_owrs, service_charge) %>% 
+  arrange(utility_name) %>%
+  filter(Survey.Year == 2015) %>%
+  left_join(df_final_bill_15 %>% select(utility_name, service_charge), 
+            by=c("utility_name_owrs"="utility_name")) %>%
+  filter(!is.na(service_charge.x)&!is.na(service_charge.y)) %>%
+  rename(service_charge_2015 = service_charge.x,
+         service_charge_2017 = service_charge.y) %>%
+  mutate(service_charge_2015 = as.numeric(service_charge_2015),
+         service_charge_2017 = as.numeric(service_charge_2017)) %>%
+  mutate(service_charge_2015 = ifelse(is.na(service_charge_2015), 0, service_charge_2015),
+         service_charge_2017 =ifelse(is.na(service_charge_2017), 0, service_charge_2017)) %>%
+  mutate(change = service_charge_2017 - service_charge_2015) %>%
+  mutate(percent_change = 100*change/service_charge_2015) %>%
+  mutate(percent_change = replace(percent_change, is.nan(percent_change), 0) )
 
-cross_year_fixed_filtered <- cross_year_fixed %>% 
-  filter(!is.na(Survey.Year.2013)&!is.na(Survey.Year.2015))
 
 
 cross_year_commodity <- df_past_years %>% 
-  select(Survey.Year, Service.Area, Water.Service.Provider, Commodity.Charge) %>% 
-  tidyr::spread( key=Survey.Year, value=c(Commodity.Charge), sep=".") %>% 
-  arrange(Water.Service.Provider) %>%
-  filter(Survey.Year.2013 != "$-")
-
-cross_year_commodity_filtered <- cross_year_commodity %>% 
-  filter(!is.na(Survey.Year.2013)&!is.na(Survey.Year.2015))
+  select(Survey.Year, Service.Area, utility_name, utility_name_owrs, commodity_charge) %>% 
+  arrange(utility_name) %>%
+  filter(Survey.Year == 2015) %>%
+  left_join(df_final_bill_15 %>% select(utility_name, commodity_charge), 
+            by=c("utility_name_owrs"="utility_name")) %>%
+  filter(!is.na(commodity_charge.x)&!is.na(commodity_charge.y)) %>%
+  rename(commodity_charge_2015 = commodity_charge.x,
+         commodity_charge_2017 = commodity_charge.y) %>%
+  mutate(commodity_charge_2015 = as.numeric(commodity_charge_2015),
+         commodity_charge_2017 = as.numeric(commodity_charge_2017)) %>%
+  mutate(commodity_charge_2015 = ifelse(is.na(commodity_charge_2015), 0, commodity_charge_2015),
+         commodity_charge_2017 =ifelse(is.na(commodity_charge_2017), 0, commodity_charge_2017)) %>%
+  mutate(change = commodity_charge_2017 - commodity_charge_2015) %>%
+  mutate(percent_change = 100*change/commodity_charge_2015) %>%
+  mutate(percent_change = replace(percent_change, is.nan(percent_change), 0) )
 
 
 cross_year_total <- df_past_years %>% 
-  select(Survey.Year, Service.Area, Water.Service.Provider, Total.Charge) %>% 
-  tidyr::spread( key=Survey.Year, value=c(Total.Charge), sep=".") %>% 
-  arrange(Water.Service.Provider) %>%
-  filter(Survey.Year.2013 != "$-")
-
-cross_year_total_filtered <- cross_year_total %>% 
-  filter(!is.na(Survey.Year.2013)&!is.na(Survey.Year.2015))
+  select(Survey.Year, Service.Area, utility_name, utility_name_owrs, bill) %>% 
+  arrange(utility_name) %>%
+  filter(Survey.Year == 2015) %>%
+  left_join(df_final_bill_15 %>% select(utility_name, bill), 
+            by=c("utility_name_owrs"="utility_name")) %>%
+  filter(!is.na(bill.x)&!is.na(bill.y)) %>%
+  rename(bill_2015 = bill.x,
+         bill_2017 = bill.y) %>%
+  mutate(bill_2015 = as.numeric(bill_2015),
+         bill_2017 = as.numeric(bill_2017)) %>%
+  mutate(bill_2015 = ifelse(is.na(bill_2015), 0, bill_2015),
+         bill_2017 =ifelse(is.na(bill_2017), 0, bill_2017)) %>%
+  mutate(change = bill_2017 - bill_2015) %>%
+  mutate(percent_change = 100*change/bill_2015) %>%
+  mutate(percent_change = replace(percent_change, is.nan(percent_change), 0) )
 
 
 
 cross_year_rate_type <- df_past_years %>% 
-  select(Survey.Year, Service.Area, Water.Service.Provider, Rate.Format) %>% 
-  tidyr::spread( key=Survey.Year, value=c(Rate.Format), sep=".") %>% 
-  arrange(Water.Service.Provider) %>%
-  filter(Survey.Year.2013 != "$-")
+  select(Survey.Year, Service.Area, utility_name, utility_name_owrs, bill_type) %>%
+  arrange(utility_name) %>%
+  filter(Survey.Year == 2015) %>%
+  left_join(df_final_bill_15 %>% select(utility_name, bill_type), 
+            by=c("utility_name_owrs"="utility_name")) %>%
+  filter(!is.na(bill_type.x)&!is.na(bill_type.y)) %>%
+  rename(bill_type_2015 = bill_type.x,
+         bill_type_2017 = bill_type.y)
 
-cross_year_rate_type_filtered <- cross_year_rate_type %>% 
-  filter(!is.na(Survey.Year.2013)&!is.na(Survey.Year.2015))
 ```
+
+
+```{r service_charge_15_vs_17, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
+tmp <- cross_year_fixed %>% summarise(`2015`=mean(service_charge_2015),
+                                      `2017`=mean(service_charge_2017)) %>%
+  tidyr::gather(key="Survey Year", value="Mean Service Charge") %>% 
+  mutate(`Survey Year` = as.character(`Survey Year`))
+
+p <- ggplot(tmp, aes(`Survey Year`, `Mean Service Charge`)) + 
+  geom_col(fill=cadc_blue) +
+  theme(axis.text.x = element_text(size = 14), axis.text.y = element_text(size = 14), 
+        axis.title = element_text(size = 20), title = element_text(size = 25),
+          legend.position = "none")
+# + scale_fill_manual(values=c(cadc_blue, cadc_red))  
+  # geom_text(aes(label=`Mean Service Charge`)) 
+
+img <- "img/service_charge_15_vs_17.png"
+ggsave(img, p)
+knitr::include_graphics(img)
+```
+
+```{r commodity_charge_15_vs_17, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
+tmp <- cross_year_commodity %>% summarise(`2015`=mean(commodity_charge_2015),
+                                          `2017`=mean(commodity_charge_2017)) %>%
+  tidyr::gather(key="Survey Year", value="Mean Commodity Charge") %>% 
+  mutate(`Survey Year` = as.character(`Survey Year`))
+
+p <- ggplot(tmp, aes(`Survey Year`, `Mean Commodity Charge`)) + 
+  geom_col(fill=cadc_blue) +
+  theme(axis.text.x = element_text(size = 14), axis.text.y = element_text(size = 14), 
+        axis.title = element_text(size = 20), title = element_text(size = 25),
+          legend.position = "none")
+# + scale_fill_manual(values=c(cadc_blue, cadc_red))  
+  # geom_text(aes(label=`Mean Service Charge`)) 
+
+img <- "img/commodity_charge_15_vs_17.png"
+ggsave(img, p)
+knitr::include_graphics(img)
+```
+
+
+```{r total_bill_15_vs_17, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
+tmp <- cross_year_total %>% summarise(`2015`=mean(bill_2015),
+                                      `2017`=mean(bill_2017)) %>%
+  tidyr::gather(key="Survey Year", value="Mean Bill") %>% 
+  mutate(`Survey Year` = as.character(`Survey Year`))
+
+p <- ggplot(tmp, aes(`Survey Year`, `Mean Bill`)) + 
+  geom_col(fill=cadc_blue) +
+  theme(axis.text.x = element_text(size = 14), axis.text.y = element_text(size = 14), 
+        axis.title = element_text(size = 20), title = element_text(size = 25),
+          legend.position = "none")
+# + scale_fill_manual(values=c(cadc_blue, cadc_red))  
+  # geom_text(aes(label=`Mean Service Charge`)) 
+
+img <- "img/total_bill_15_vs_17.png"
+ggsave(img, p)
+knitr::include_graphics(img)
+```
+
+
 
 
 # Analysis Using Customized Usage Benchmarks from Supplier Report
@@ -283,15 +435,6 @@ cross_year_rate_type_filtered <- cross_year_rate_type %>%
 
 ```{r, echo=FALSE, warning=FALSE}
 df_final_bill_single <- df_final_bill_customized
-
-
-df_past_years$utility_name_raftelis <- sapply(df_past_years$Water.Service.Provider, preprocess_raftelis_name) 
-df_past_years <- assign_fuzzy_match_names(df_past_years, 
-                                          source_column_name = "utility_name_raftelis",
-                                          new_name_column = "utility_name_owrs",
-                                          names_to_match_with = df_final_bill_single$utility_name,
-                                          manual_map = NULL,
-                                          cutoff = 0.85)
 
 
 df_final_bill_single <- assign_fuzzy_match_names(df_final_bill_single, 
@@ -323,9 +466,39 @@ df_rates_income <- eff_vs_rate %>% left_join(district_income, by=c('PWSID'='repo
 This section discusses general characteristics of the rates for utilities analyzed in this survey.
 
 ```{r bill_frequency_pie, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px", fig.cap = bill_freq_cap }
-p <- plot_bill_frequency_piechart(df_final_bill_single)
+p <- plot_bill_frequency_piechart(df_final_bill_single, 2017)
 
 img <- "img/bill_frequency_pie.png"
+ggsave(img, p)
+knitr::include_graphics(img)
+
+bill_freq_cap <- fig_nums(name='bill_frequency_piechart', caption= 'Bill Frequency Pie Chart. About three quarters of the water agencies use a monthly billing system.')
+
+```
+
+```{r bill_frequency_pie_2015, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px", fig.cap = bill_freq_cap }
+tmp <- df_past_years %>% filter(Survey.Year == 2015) %>%
+  mutate(bill_frequency = ifelse(bill_frequency=="Bi-monthly", "Bimonthly", bill_frequency),
+         bill_frequency = ifelse(bill_frequency=="Tri-monthly", "Trimonthly", bill_frequency))
+
+p <- plot_bill_frequency_piechart(tmp, 2015)
+
+img <- "img/bill_frequency_pie_2015.png"
+ggsave(img, p)
+knitr::include_graphics(img)
+
+bill_freq_cap <- fig_nums(name='bill_frequency_piechart', caption= 'Bill Frequency Pie Chart. About three quarters of the water agencies use a monthly billing system.')
+
+```
+
+```{r bill_frequency_pie_2013, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px", fig.cap = bill_freq_cap }
+tmp <- df_past_years %>% filter(Survey.Year == 2013) %>%
+  mutate(bill_frequency = ifelse(bill_frequency=="Bi-monthly", "Bimonthly", bill_frequency),
+         bill_frequency = ifelse(bill_frequency=="Tri-monthly", "Trimonthly", bill_frequency))
+
+p <- plot_bill_frequency_piechart(tmp, 2013)
+
+img <- "img/bill_frequency_pie_2013.png"
 ggsave(img, p)
 knitr::include_graphics(img)
 
@@ -346,11 +519,36 @@ mean_bill_pie_cap <- fig_nums(name='mean_bill_pie', caption= 'Average bill by pa
 
 
 ```{r rate_structure_type_pie, echo=FALSE, message=FALSE, out.width="600px"}
-p <- plot_rate_type_pie(df_final_bill_single)
+p <- plot_rate_type_pie(df_final_bill_single, 2017)
 
 img <- "img/rate_structure_type_pie.png"
 ggsave(img, p)
 knitr::include_graphics(img)
+```
+
+
+```{r rate_structure_type_pie_2015, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px", fig.cap = bill_freq_cap }
+tmp <- df_past_years %>% filter(Survey.Year == 2015)
+
+p <- plot_rate_type_pie(tmp, 2015)
+
+img <- "img/rate_structure_type_pie_2015.png"
+ggsave(img, p)
+knitr::include_graphics(img)
+
+```
+
+```{r rate_structure_type_pie_2013, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px", fig.cap = bill_freq_cap }
+tmp <- df_past_years %>% filter(Survey.Year == 2013) %>%
+  mutate(bill_type = ifelse(bill_type=="Inclining", "Tiered", bill_type),
+         bill_type = ifelse(bill_type=="Declining", "Other", bill_type))
+
+p <- plot_rate_type_pie(tmp, 2013)
+
+img <- "img/rate_structure_type_pie_2013.png"
+ggsave(img, p)
+knitr::include_graphics(img)
+
 ```
 
 
@@ -533,13 +731,13 @@ knitr::include_graphics(img)
 df_final_bill_single <- df_final_bill_15
 
 
-df_past_years$utility_name_raftelis <- sapply(df_past_years$Water.Service.Provider, preprocess_raftelis_name) 
-df_past_years <- assign_fuzzy_match_names(df_past_years, 
-                                          source_column_name = "utility_name_raftelis",
-                                          new_name_column = "utility_name_owrs",
-                                          names_to_match_with = df_final_bill_single$utility_name,
-                                          manual_map = NULL,
-                                          cutoff = 0.85)
+# df_past_years$utility_name_raftelis <- sapply(df_past_years$utility_name, preprocess_raftelis_name) 
+# df_past_years <- assign_fuzzy_match_names(df_past_years, 
+#                                           source_column_name = "utility_name_raftelis",
+#                                           new_name_column = "utility_name_owrs",
+#                                           names_to_match_with = df_final_bill_single$utility_name,
+#                                           manual_map = NULL,
+#                                           cutoff = 0.85)
 
 
 df_final_bill_single <- assign_fuzzy_match_names(df_final_bill_single, 

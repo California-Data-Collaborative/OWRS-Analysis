@@ -39,6 +39,16 @@ Load suppliers report info and join with the Utilities list from the OWRS files
 
 
 
+<img src="img/service_charge_15_vs_17.png" width="600px" />
+
+<img src="img/commodity_charge_15_vs_17.png" width="600px" />
+
+
+<img src="img/total_bill_15_vs_17.png" width="600px" />
+
+
+
+
 # Analysis Using Customized Usage Benchmarks from Supplier Report
 
 
@@ -54,6 +64,16 @@ This section discusses general characteristics of the rates for utilities analyz
 <p class="caption">Figure  1: Bill Frequency Pie Chart. About three quarters of the water agencies use a monthly billing system.</p>
 </div>
 
+<div class="figure">
+<img src="img/bill_frequency_pie_2015.png" alt="Figure  1: Bill Frequency Pie Chart. About three quarters of the water agencies use a monthly billing system." width="600px" />
+<p class="caption">Figure  1: Bill Frequency Pie Chart. About three quarters of the water agencies use a monthly billing system.</p>
+</div>
+
+<div class="figure">
+<img src="img/bill_frequency_pie_2013.png" alt="Figure  1: Bill Frequency Pie Chart. About three quarters of the water agencies use a monthly billing system." width="600px" />
+<p class="caption">Figure  1: Bill Frequency Pie Chart. About three quarters of the water agencies use a monthly billing system.</p>
+</div>
+
 
 <div class="figure">
 <img src="img/mean_bill_by_parts_pie.png" alt="Figure  2: Average bill by parts for all agencies, considering a consumption of 10 CCF in a month. The average total bill is $60.68. With an average service charge (fixed) of $24.63 (40.6%) and an average commodity charge (variable) of $35.61 (58.7%)." width="600px" />
@@ -62,6 +82,17 @@ This section discusses general characteristics of the rates for utilities analyz
 
 
 <img src="img/rate_structure_type_pie.png" width="600px" />
+
+
+<div class="figure">
+<img src="img/rate_structure_type_pie_2015.png" alt="Figure  1: Bill Frequency Pie Chart. About three quarters of the water agencies use a monthly billing system." width="600px" />
+<p class="caption">Figure  1: Bill Frequency Pie Chart. About three quarters of the water agencies use a monthly billing system.</p>
+</div>
+
+<div class="figure">
+<img src="img/rate_structure_type_pie_2013.png" alt="Figure  1: Bill Frequency Pie Chart. About three quarters of the water agencies use a monthly billing system." width="600px" />
+<p class="caption">Figure  1: Bill Frequency Pie Chart. About three quarters of the water agencies use a monthly billing system.</p>
+</div>
 
 
 <img src="img/usage_histogram.png" width="600px" />
