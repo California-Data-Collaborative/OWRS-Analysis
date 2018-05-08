@@ -404,7 +404,7 @@ p <- ggplot(tmp, aes(`Survey Year`, `Mean Commodity Charge`)) +
         axis.title = element_text(size = 20), title = element_text(size = 25),
           legend.position = "none") +
 # + scale_fill_manual(values=c(cadc_blue, cadc_red))  
-  geom_text(aes(y=`Mean Commodity Charge`+ 1, 
+  geom_text(aes(y=`Mean Commodity Charge`+ 2, 
                 label=printCurrency(round(`Mean Commodity Charge`, 2)),
                 size=14)
             )
@@ -427,7 +427,7 @@ p <- ggplot(tmp, aes(`Survey Year`, `Mean Bill`)) +
         axis.title = element_text(size = 20), title = element_text(size = 25),
           legend.position = "none") +
 # + scale_fill_manual(values=c(cadc_blue, cadc_red))  
-  geom_text(aes(y=`Mean Bill`+ 2, 
+  geom_text(aes(y=`Mean Bill`+ 3, 
                 label=printCurrency(round(`Mean Bill`, 2)),
                 size=14)
             )
