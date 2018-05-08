@@ -39,6 +39,7 @@ Load suppliers report info and join with the Utilities list from the OWRS files
 
 
 
+
 <img src="img/service_charge_15_vs_17.png" width="600px" />
 
 <img src="img/commodity_charge_15_vs_17.png" width="600px" />
@@ -170,7 +171,7 @@ This section discusses general characteristics of the rates for utilities analyz
 
 <img src="img/15ccf/service_charge_ratio_histogram_15.png" width="600px" />
 
-<img src="img/15ccf/total_bill_histogram_15.png" width="600px" />
+<img src="img/comparisons/total_bill_histograms.png" width="600px" height="800px" />
 
 
 ## Interaction between Rates and Efficiency

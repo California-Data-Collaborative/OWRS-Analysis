@@ -177,8 +177,8 @@ calculate_bills_for_all_utilities <- function(df_OWRS, supplier_report, df_sampl
         
         if(!is.na(row$PWSID) && nchar(row$PWSID) > 1){
           tmp_report <- supplier_report %>% 
-            filter(report_pwsid == row$PWSID,
-                   report_month == tmp_row$usage_month) %>%
+            filter(report_pwsid == row$PWSID) %>%
+                   # report_month == tmp_row$usage_month) %>%
             summarise(report_eto = mean(report_eto, na.rm=TRUE),
                       report_gpcd = mean(report_gpcd_calculated, na.rm=TRUE))
           

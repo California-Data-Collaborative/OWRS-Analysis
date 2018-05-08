@@ -43,7 +43,7 @@ plot_mean_bill_pie <- function(df){
   filtered <- df %>% #filter(usage_ccf == demo_ccf) %>%
     distinct(utility_name, .keep_all=TRUE)
   
-  meanBill <- round(mean(filtered$bill), 2)
+  meanBill <- round(mean(filtered$service_charge + filtered$commodity_charge), 2)
   meanService <- round(mean(filtered$service_charge), 2)
   meanCommodity <- round(mean(filtered$commodity_charge), 2)
   meanOther <- round(meanBill - (meanService + meanCommodity), 2)
@@ -61,7 +61,7 @@ plot_mean_bill_pie <- function(df){
     geom_text(aes(y = rev(Value)/2 + c(0, cumsum(rev(Value))[-length(Value)]), 
                   label = printCurrency(rev(Value) ))) +
     ggtitle("Mean Bill by Parts", subtitle = paste("The total mean bill is ", 
-                                                   printCurrency(meanBill), "0", sep = ""))  +
+                                                   printCurrency(meanBill), sep = ""))  +
     labs(fill = "Charges") +
     theme(plot.title = element_text(lineheight=.8, face="bold"), plot.subtitle = element_text(lineheight = .8))
   
@@ -96,7 +96,7 @@ plot_rate_type_pie <- function(df, survey_year){
     coord_polar("y", start=0) + xlim(0.3,2.5)+
     scale_fill_brewer(palette="Purples") + 
     theme_void() +
-    geom_text(aes(y = rev(Value)/2 + c(0, cumsum(rev(Value))[-length(Value)]), x=2,
+    geom_text(aes(y = rev(Value)/2 + c(0, cumsum(rev(Value))[-length(Value)]), x = c(1.3, 2, 2 , 2),
                   label = paste(rev(Value), "\n(", percent(rev(Value)/nrow(df_distint_util)), ")", sep="") ),
                   size=4) +
     ggtitle(paste("Counts of Rate Structure Types", survey_year) )  + 
@@ -141,22 +141,36 @@ plot_ratio_histogram <- function(df){
   ratio_histogram
 }
 
-plot_bill_histogram <- function(df){
+plot_bill_histogram <- function(df, axis=TRUE, title=TRUE, title_text="Total Bill"){
   filtered <- df %>% #filter(usage_ccf == demo_ccf) %>%
     distinct(utility_name, .keep_all=TRUE)
   
   bill_histogram <- ggplot(filtered, aes(x=bill)) +
-    geom_histogram(binwidth=(max(filtered$bill)- min(filtered$bill))/ round(length(filtered$bill)/10), colour="white", fill=cadc_blue)+
-    labs(x = "Bill Amount ($)", y = "Count of Districts")+
-    ggtitle(paste("Total Bill"))+
-    scale_y_continuous(expand = c(0,0))+
-    #scale_x_continuous(breaks=seq(round(min(filtered$bill)), round(max(filtered$bill)), round((max(filtered$bill)- min(filtered$bill))/ (length(filtered$bill)/8), 0)))+
-    theme(axis.title.x = element_text(size = 15), axis.title.y = element_text(size = 15),
-          axis.text.x = element_text(size = 15), axis.text.y = element_text(size = 15),
-          title = element_text(size = 15)) +
-    geom_vline(xintercept = mean(filtered$bill), color = cadc_red)
+    geom_histogram(binwidth=10, 
+                   colour="white", fill=cadc_blue) + 
+    scale_y_continuous(expand = c(0,0)) +
+    geom_vline(xintercept = mean(filtered$bill), color = cadc_red) +
+    xlim(0, 450)
   
+  if(axis==TRUE){
+    bill_histogram <- bill_histogram + 
+      labs(x = "Bill Amount ($)", y = "Count of Districts") +
+      theme(axis.title.x = element_text(size = 15), axis.title.y = element_text(size = 15), 
+            axis.text.x = element_text(size = 15), axis.text.y = element_text(size = 15),
+          title = element_text(size = 15))
+  }
+  else{
+    bill_histogram <- bill_histogram + 
+      labs(x = "Bill Amount ($)", y = "Count of Districts") +
+      theme(axis.title.x = element_blank(), axis.title.y = element_text(size = 15), 
+            axis.text.x = element_text(size = 15), axis.text.y = element_text(size = 15),
+            title = element_text(size = 15))
+  }
   
+  if(title==TRUE){
+    bill_histogram <- bill_histogram + ggtitle(paste(title_text))
+  }
+
   bill_histogram
 }
 
@@ -210,7 +224,7 @@ plot_bills_vs_usage <- function(df, start, end, interval){
   bill_scatter <- ggplot(df_final_bill, aes(x=usage_ccf, y=bill, color=utility_name)) +
     #geom_point(shape=1) +
     geom_line()  +
-    labs(x = "Usage CCF", y = "Bill", color = "Utility") +
+    labs(x = "Usage (CCF)", y = "Bill", color = "Utility") +
     ggtitle("Total Bill Vs. Usage", subtitle = paste("At every", interval, "CCF from", start, "to", end))+
     theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 20),
           legend.position = "none")
@@ -219,12 +233,16 @@ plot_bills_vs_usage <- function(df, start, end, interval){
 }
 
 boxplot_bills_vs_usage <- function(df, start, end, interval){
+  df <- df %>% filter(bill < 500)
+  
   bill_box <- ggplot(df, aes(x=usage_ccf, y=bill, group=usage_ccf)) +
     geom_boxplot()  +
-    scale_x_discrete(name = "Usage (CCF)") +
-    scale_y_continuous(name = "Total Bill (Dollars)")+
+    labs(x = "Usage (CCF)", y = "Total Bill (Dollars)", color = "Utility") +
+    # scale_x_discrete(name = "Usage (CCF)") +
+    # scale_y_continuous(name = "Total Bill (Dollars)")+
     ggtitle("Total Bill Vs. Usage", subtitle = paste("At every", interval, "CCF from", start, "to", end))+
-    theme(axis.text.x = element_text(size = 14), axis.text.y = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 25),
+    theme(axis.text.x = element_text(size = 14), axis.text.y = element_text(size = 14), 
+          axis.title = element_text(size = 20), title = element_text(size = 25),
           legend.position = "none")
   
   bill_box
@@ -434,7 +452,7 @@ plot_bill_vs_income_scatter <- function(df){
   p <- ggplot(tmp, aes(x=income_placeholder, y=bill, color=bill_type)) + 
     scale_colour_manual(values=c(cadc_red, cadc_blue, cadc_yellow)) +
     geom_point() + geom_jitter() +
-    geom_abline(intercept = 0, slope = 0.03/12, color='darkgrey') +  # line at 3% of income
+    geom_abline(intercept = 0, slope = 0.02/12, color='darkgrey') +  # line at 3% of income
     xlim(0, 150000) +
     labs(x="Approximate Median Household Income ($)", y="Total Bill at Average Usage ($)", 
          color="Rate Type", title="Total Bill and Median Annual Household Income",

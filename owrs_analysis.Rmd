@@ -65,9 +65,10 @@ customer_classes <- c("RESIDENTIAL_SINGLE"
 #End
 
 
-df_adjustable_sample <- tbl_df(data.frame (usage_month = 7, days_in_period = 31, usage_year=2017,
-                                           hhsize = 4, meter_size = '3/4"', usage_zone = 1, landscape_area = 2000,
-                                           et_amount = 7.0, wrap_customer = "No", irr_area = 2000, 
+df_adjustable_sample <- tbl_df(data.frame (usage_month = 4, days_in_period = 30.4, usage_year=2017,
+                                           hhsize = 4, meter_size = '3/4"', usage_zone = 1, 
+                                           landscape_area = 2000, irr_area = 2000,
+                                           et_amount = 4.0, wrap_customer = "No", 
                                            carw_customer = "No", season = "Summer", tax_exemption = "granted", 
                                            lot_size_group = 3, temperature_zone = "Medium", pressure_zone = 1, 
                                            water_font = "city_delivered", city_limits = "inside_city", 
@@ -379,9 +380,12 @@ p <- ggplot(tmp, aes(`Survey Year`, `Mean Service Charge`)) +
   geom_col(fill=cadc_blue) +
   theme(axis.text.x = element_text(size = 14), axis.text.y = element_text(size = 14), 
         axis.title = element_text(size = 20), title = element_text(size = 25),
-          legend.position = "none")
+          legend.position = "none") +
 # + scale_fill_manual(values=c(cadc_blue, cadc_red))  
-  # geom_text(aes(label=`Mean Service Charge`)) 
+  geom_text(aes(y=`Mean Service Charge`+ 1, 
+                label=printCurrency(round(`Mean Service Charge`, 2)),
+                size=14)
+            ) 
 
 img <- "img/service_charge_15_vs_17.png"
 ggsave(img, p)
@@ -398,9 +402,12 @@ p <- ggplot(tmp, aes(`Survey Year`, `Mean Commodity Charge`)) +
   geom_col(fill=cadc_blue) +
   theme(axis.text.x = element_text(size = 14), axis.text.y = element_text(size = 14), 
         axis.title = element_text(size = 20), title = element_text(size = 25),
-          legend.position = "none")
+          legend.position = "none") +
 # + scale_fill_manual(values=c(cadc_blue, cadc_red))  
-  # geom_text(aes(label=`Mean Service Charge`)) 
+  geom_text(aes(y=`Mean Commodity Charge`+ 1, 
+                label=printCurrency(round(`Mean Commodity Charge`, 2)),
+                size=14)
+            )
 
 img <- "img/commodity_charge_15_vs_17.png"
 ggsave(img, p)
@@ -418,9 +425,12 @@ p <- ggplot(tmp, aes(`Survey Year`, `Mean Bill`)) +
   geom_col(fill=cadc_blue) +
   theme(axis.text.x = element_text(size = 14), axis.text.y = element_text(size = 14), 
         axis.title = element_text(size = 20), title = element_text(size = 25),
-          legend.position = "none")
+          legend.position = "none") +
 # + scale_fill_manual(values=c(cadc_blue, cadc_red))  
-  # geom_text(aes(label=`Mean Service Charge`)) 
+  geom_text(aes(y=`Mean Bill`+ 2, 
+                label=printCurrency(round(`Mean Bill`, 2)),
+                size=14)
+            )
 
 img <- "img/total_bill_15_vs_17.png"
 ggsave(img, p)
@@ -791,12 +801,19 @@ ggsave(img, p)
 knitr::include_graphics(img)
 ```
 
-```{r total_bill_histogram_15, echo=FALSE, message=FALSE, out.width="600px"}
-p <- plot_bill_histogram(df_final_bill_single)
+```{r total_bill_histogram_15, echo=FALSE, message=FALSE, out.width="600px", out.height="800px"}
+p1 <- plot_bill_histogram(df_final_bill_customized, axis=FALSE, title_text = "Total Bill - Localized")
+p2 <- plot_bill_histogram(df_final_bill_15, title_text = "Total Bill - 15 CCF")
 
-img <- "img/15ccf/total_bill_histogram_15.png"
+p <- plot_grid(p1, p2, align = "h", nrow = 2)
+
+img <- "img/comparisons/total_bill_histograms.png"
 ggsave(img, p)
 knitr::include_graphics(img)
+
+# img <- "img/15ccf/total_bill_histogram_15.png"
+# ggsave(img, p)
+# knitr::include_graphics(img)
 ```
 
 
