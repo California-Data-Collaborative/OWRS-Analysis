@@ -174,19 +174,25 @@ calculate_bills_for_all_utilities <- function(df_OWRS, supplier_report, df_sampl
         tmp_sample$is_single <- FALSE
         tmp_row <- tmp_sample[1,]
         tmp_row$is_single <- TRUE
-        
+
         if(!is.na(row$PWSID) && nchar(row$PWSID) > 1){
           tmp_report <- supplier_report %>% 
             filter(report_pwsid == row$PWSID) %>%
                    # report_month == tmp_row$usage_month) %>%
             summarise(report_eto = mean(report_eto, na.rm=TRUE),
-                      report_gpcd = mean(report_gpcd_calculated, na.rm=TRUE))
+                      report_gpcd = mean(report_gpcd_calculated, na.rm=TRUE),
+                      avg_hhsize = mean(avg_hhsize))
           
           if(!is.na(tmp_report$report_eto)){
             tmp_row$et_amount <- tmp_report$report_eto
           }
+          
+          if(!is.na(tmp_report$avg_hhsize)){
+            tmp_row$hhsize <- tmp_report$avg_hhsize
+          }
+          
           if(!is.na(tmp_report$report_gpcd)){
-            tmp_row$usage_ccf <- tmp_report$report_gpcd*4*tmp_row$days_in_period/748
+            tmp_row$usage_ccf <- tmp_report$report_gpcd*tmp_row$hhsize*tmp_row$days_in_period/748
           }else{
             tmp_row$usage_ccf <- single_value
           }

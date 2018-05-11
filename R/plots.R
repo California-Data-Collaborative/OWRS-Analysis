@@ -112,7 +112,7 @@ plot_usage_histogram <- function(df){
     distinct(utility_name, .keep_all=TRUE)
   
   p <- ggplot(filtered, aes(x=usage_ccf)) +
-    geom_histogram(binwidth=5, colour="white", fill=cadc_blue)+
+    geom_histogram(binwidth=3, colour="white", fill=cadc_blue)+
     labs(x = "Usage Benchmark (CCF)", y = "Count of Districts")+
     ggtitle(paste("Distribution of Usage Benchmarks"))+
     scale_y_continuous(expand = c(0,0))+

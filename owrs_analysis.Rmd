@@ -66,7 +66,7 @@ customer_classes <- c("RESIDENTIAL_SINGLE"
 
 
 df_adjustable_sample <- tbl_df(data.frame (usage_month = 4, days_in_period = 30.4, usage_year=2017,
-                                           hhsize = 4, meter_size = '3/4"', usage_zone = 1, 
+                                           hhsize = 3, meter_size = '3/4"', usage_zone = 1, 
                                            landscape_area = 2000, irr_area = 2000,
                                            et_amount = 4.0, wrap_customer = "No", 
                                            carw_customer = "No", season = "Summer", tax_exemption = "granted", 
@@ -144,6 +144,9 @@ df_OWRS$utility_name_supplier_report <- ifelse(manually_mapped_names == "NULL",
 merged_OWRS <- merge(df_OWRS, supplier_pwsid, by.x = "utility_name_supplier_report", by.y = "Agency_Name", 
                      all.x=TRUE, all.y=FALSE)
 
+# Merge in household sizes from Census
+district_hhsize <- read.csv("Demographics_by_Water_District/Census_Data/Water_District_Household_Sizes_2017.csv")
+supplier_reports <- dplyr::left_join(supplier_reports, district_hhsize, by=c('report_pwsid'='pwsid') )
 
 # calculate bills
 
