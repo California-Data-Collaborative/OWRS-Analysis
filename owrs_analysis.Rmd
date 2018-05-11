@@ -902,4 +902,16 @@ knitr::include_graphics(img)
 ```
 
 
+```{r create_summary_table, echo=FALSE}
+cols <- c('utility_name', 'effective_date', 'bill_frequency', 'bill_unit','usage_ccf', 'hhsize', 'et_amount',
+          'bill_type', 'service_charge', 'commodity_charge', 'bill', 'tier_starts')
+
+df_summary <- df_final_bill_customized[cols]
+df_summary$tier_prices <- ifelse(is.na(df_final_bill_customized$tier_prices), 
+                                 df_final_bill_customized$flat_rate,
+                                 df_final_bill_customized$tier_prices)
+
+write.csv(df_summary, file = 'summary_table.csv', row.names = FALSE)
+
+```
 
