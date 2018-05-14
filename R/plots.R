@@ -150,7 +150,7 @@ plot_bill_histogram <- function(df, axis=TRUE, title=TRUE, title_text="Total Bil
                    colour="white", fill=cadc_blue) + 
     scale_y_continuous(expand = c(0,0)) +
     geom_vline(xintercept = mean(filtered$bill), color = cadc_red) +
-    xlim(0, 450)
+    xlim(0, 305)
   
   if(axis==TRUE){
     bill_histogram <- bill_histogram + 
