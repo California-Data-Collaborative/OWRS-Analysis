@@ -433,9 +433,9 @@ plot_affordability_histogram <- function(df){
     distinct(utility_name, .keep_all=TRUE)
   
   p <- ggplot(filtered, aes(x=100*bill_over_income*12)) +
-    geom_histogram(binwidth=.8, colour="white", fill=cadc_blue)+
+    geom_histogram(binwidth=.4, colour="white", fill=cadc_blue)+
     labs(x = "Percent of Median Monthly Household Income", y = "Count of Districts")+
-    ggtitle(paste("July Bill as a Percent of Median Monthly Household Income"))+
+    ggtitle(paste("Average Bill as a Percent of Median Monthly Household Income"))+
     scale_y_continuous(expand = c(0,0))+
     theme(axis.title.x = element_text(size = 15), axis.title.y = element_text(size = 15),
           axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10),
@@ -452,11 +452,11 @@ plot_bill_vs_income_scatter <- function(df){
   p <- ggplot(tmp, aes(x=income_placeholder, y=bill, color=bill_type)) + 
     scale_colour_manual(values=c(cadc_red, cadc_blue, cadc_yellow)) +
     geom_point() + geom_jitter() +
-    geom_abline(intercept = 0, slope = 0.02/12, color='darkgrey') +  # line at 3% of income
+    geom_abline(intercept = 0, slope = 0.02/12, color='darkgrey') +  # line at 3% of annual income
     xlim(0, 150000) +
     labs(x="Approximate Median Household Income ($)", y="Total Bill at Average Usage ($)", 
          color="Rate Type", title="Total Bill and Median Annual Household Income",
-         subtitle="Grey line indicates 3% of income used for water") 
+         subtitle="Grey line indicates 2% of income used for water") 
   
   p
 }
