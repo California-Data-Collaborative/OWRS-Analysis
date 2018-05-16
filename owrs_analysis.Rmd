@@ -87,14 +87,16 @@ df_sample <-  left_join(df_usage, df_adjustable_sample, by="cust_class")
 singleTargetValue <- 15
 
 #Retrieve the directories and files in the directores from the Open-Water-Specification-File directory
-owrs_path <- "../Open-Water-Rate-Specification/full_utility_rates/California";
+owrs_path <- "../Open-Water-Rate-Specification/full_utility_rates";
 
 #TODO insert the filename gathering functioon here
 df_OWRS <- tbl_df(as.data.frame(list("filepath"=getFileNames(owrs_path)), stringsAsFactors=FALSE)) %>% 
   
-  mutate(owrs_directory = map(filepath, strsplit, split="/") %>% map(c(1,1))) %>%
+  mutate(state = map(filepath, strsplit, split="/") %>% map(c(1,1))) %>%
   
-  mutate(filename = map(filepath, strsplit, split="/") %>% map(c(1,2))) %>%
+  mutate(owrs_directory = map(filepath, strsplit, split="/") %>% map(c(1,2))) %>%
+  
+  mutate(filename = map(filepath, strsplit, split="/") %>% map(c(1,3))) %>%
   
   mutate(utility_id = map(owrs_directory, strsplit, split=" ") %>%  
                       map(1) %>%map(tail, n=1) %>%
