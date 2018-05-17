@@ -113,7 +113,7 @@ plot_usage_histogram <- function(df){
   
   p <- ggplot(filtered, aes(x=usage_ccf)) +
     geom_histogram(binwidth=3, colour="white", fill=cadc_blue)+
-    labs(x = "Usage Benchmark (CCF)", y = "Count of Districts")+
+    labs(x = "Usage Benchmark (CCF)", y = "Count of Agencies")+
     ggtitle(paste("Distribution of Usage Benchmarks"))+
     scale_y_continuous(expand = c(0,0))+
     theme(axis.title.x = element_text(size = 15), axis.title.y = element_text(size = 15),
@@ -130,7 +130,7 @@ plot_ratio_histogram <- function(df){
   
   ratio_histogram <- ggplot(filtered, aes(x=percentFixed)) +
     geom_histogram(binwidth=.05, colour="white", fill=cadc_blue)+
-    labs(x = "Proportion of Total Bill", y = "Count of Districts")+
+    labs(x = "Proportion of Total Bill", y = "Count of Agencies")+
     ggtitle(paste("Fixed Service Charge as Proportion of Total Bill"))+
     scale_y_continuous(expand = c(0,0))+
     theme(axis.title.x = element_text(size = 15), axis.title.y = element_text(size = 15),
@@ -154,14 +154,14 @@ plot_bill_histogram <- function(df, axis=TRUE, title=TRUE, title_text="Total Bil
   
   if(axis==TRUE){
     bill_histogram <- bill_histogram + 
-      labs(x = "Bill Amount ($)", y = "Count of Districts") +
+      labs(x = "Bill Amount ($)", y = "Count of Agencies") +
       theme(axis.title.x = element_text(size = 15), axis.title.y = element_text(size = 15), 
             axis.text.x = element_text(size = 15), axis.text.y = element_text(size = 15),
           title = element_text(size = 15))
   }
   else{
     bill_histogram <- bill_histogram + 
-      labs(x = "Bill Amount ($)", y = "Count of Districts") +
+      labs(x = "Bill Amount ($)", y = "Count of Agencies") +
       theme(axis.title.x = element_blank(), axis.title.y = element_text(size = 15), 
             axis.text.x = element_text(size = 15), axis.text.y = element_text(size = 15),
             title = element_text(size = 15))
@@ -270,7 +270,7 @@ boxplot_bill_by_region <- function(df){
   
   p2 <- ggplot(medians, aes(report_hydrologic_region, counts)) + 
     geom_col(fill=cadc_lightblue) + geom_text(aes(label=counts)) +coord_flip() +
-    scale_y_continuous(name = "# Districts") +
+    scale_y_continuous(name = "# Agencies") +
     theme(axis.title.y=element_blank(),
           axis.text.y=element_blank(),
           axis.ticks.y=element_blank(),
@@ -324,7 +324,7 @@ plot_efficiency_ts <- function(df){
     geom_boxplot()  +
     scale_x_date(name="Date")+
     scale_y_continuous(name = "Efficiency Ratio (Use/Goal)")+
-    ggtitle("Efficiency of all Districts", subtitle = "Relative to Their Efficiency Goal")+
+    ggtitle("Efficiency of all Agencies", subtitle = "Relative to Their Efficiency Goal")+
     theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 20),
           legend.position = "none")
   
@@ -339,7 +339,7 @@ plot_gpcd_ts <- function(df){
     geom_boxplot()  +
     scale_x_date(name = "")+
     scale_y_continuous(name = "Residential GPCD (calculated)") +
-    ggtitle("Residential GPCD of all Districts")+
+    ggtitle("Residential GPCD of all Agencies")+
     theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 20),
           legend.position = "none")
   
@@ -356,7 +356,7 @@ plot_eff_vs_bill <- function(df){
                         aes(x=bill, y=pct_above_target)) +
     geom_point(color=cadc_blue) +
     labs(x = "Total Bill (Dollars)", y = "Efficiency Ratio (Use/Goal)") +
-    ggtitle( paste("Efficiency vs Total Bill", subtitle = paste(chart_count,"Districts Total")) )+
+    ggtitle( paste("Efficiency vs Total Bill", subtitle = paste(chart_count,"Agencies Total")) )+
     theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 20),
           legend.position = "none")+
     geom_smooth(method='lm', color=cadc_red, size=0.8)
@@ -372,7 +372,7 @@ plot_eff_vs_pctFixed <- function(df){
                             aes(x=percentFixed, y=pct_above_target)) +
     geom_point(color=cadc_blue) +
     labs(x = "Percentage of Service Charge in Total Bill", y = "Percent above target") +
-    ggtitle("Efficiency vs Percent of Fixed Rate", subtitle = paste(chart_count,"Districts Total"))+
+    ggtitle("Efficiency vs Percent of Fixed Rate", subtitle = paste(chart_count,"Agencies Total"))+
     theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 20),
           legend.position = "none")+
     geom_smooth(method='lm', color=cadc_red, size=0.8)
@@ -384,8 +384,8 @@ plot_fixed_costs_percentage_histogram <- function(df){
   p <- ggplot(df, aes(costs_pct_fixed)) + 
     geom_histogram(bins = 10, colour="white", fill=cadc_blue) +
     xlab("Fixed Costs Percentage")+
-    ylab("Count of Districts") +
-    ggtitle("Distribution of Fixed Costs")+#, subtitle = paste(chart_count,"Districts Total"))+
+    ylab("Count of Agencies") +
+    ggtitle("Distribution of Fixed Costs")+#, subtitle = paste(chart_count,"Agencies Total"))+
     theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 20),
           legend.position = "none")
   
@@ -396,8 +396,8 @@ plot_fixed_revenue_percentage_histogram <- function(df){
   p <- ggplot(df, aes(rev_pct_fixed)) + 
     geom_histogram(bins = 10, colour="white", fill=cadc_blue) +
     xlab("Fixed Revenue Percentage")+
-    ylab("Count of Districts") +
-    ggtitle("Distribution of Fixed Revenue")+#, subtitle = paste(chart_count,"Districts Total"))+
+    ylab("Count of Agencies") +
+    ggtitle("Distribution of Fixed Revenue")+#, subtitle = paste(chart_count,"Agencies Total"))+
     theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 20),
           legend.position = "none")
   
@@ -408,7 +408,7 @@ plot_fixed_costs_vs_fixed_rev_scatter <- function(df){
   p <- ggplot(df, aes(x=costs_pct_fixed, y=rev_pct_fixed)) + geom_point(color=cadc_blue) +
     xlab("Fixed Cost Percentage")+
     ylab("Fixed Revenue Percentage") +
-    ggtitle("Fixed Revenue vs. Fixed Costs")+#, subtitle = paste(chart_count,"Districts Total"))+
+    ggtitle("Fixed Revenue vs. Fixed Costs")+#, subtitle = paste(chart_count,"Agencies Total"))+
     theme(axis.text = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 20),
           legend.position = "none")
   
@@ -422,7 +422,7 @@ income_bracket_barchart <- function(df){
   p <- ggplot(tmp, aes(median_category, counts)) + 
     geom_col(fill=cadc_lightblue) + coord_flip() +
     geom_text(aes(label=counts)) + 
-    labs(x="Median Income Bracket", y="Count of Districts") +
+    labs(x="Median Income Bracket", y="Count of Agencies") +
     theme(axis.text.x = element_text(size = 14), axis.text.y = element_text(size = 14), axis.title = element_text(size = 20), title = element_text(size = 20))
   
   p
@@ -434,7 +434,7 @@ plot_affordability_histogram <- function(df){
   
   p <- ggplot(filtered, aes(x=100*bill_over_income*12)) +
     geom_histogram(binwidth=.4, colour="white", fill=cadc_blue)+
-    labs(x = "Percent of Median Monthly Household Income", y = "Count of Districts")+
+    labs(x = "Percent of Median Monthly Household Income", y = "Count of Agencies")+
     ggtitle(paste("Average Bill as a Percent of Median Monthly Household Income"))+
     scale_y_continuous(expand = c(0,0))+
     theme(axis.title.x = element_text(size = 15), axis.title.y = element_text(size = 15),
