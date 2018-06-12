@@ -240,9 +240,9 @@ boxplot_bills_vs_usage <- function(df, start, end, interval){
     labs(x = "Usage (CCF)", y = "Total Bill (Dollars)", color = "Utility") +
     # scale_x_discrete(name = "Usage (CCF)") +
     # scale_y_continuous(name = "Total Bill (Dollars)")+
-    ggtitle("Total Bill Vs. Usage", subtitle = paste("At every", interval, "CCF from", start, "to", end))+
+    ggtitle(paste("Total Bill Vs. Usage\nAt every", interval, "CCF from", start, "to", end))+
     theme(axis.text.x = element_text(size = 14), axis.text.y = element_text(size = 14), 
-          axis.title = element_text(size = 20), title = element_text(size = 25),
+          axis.title = element_text(size = 20), title = element_text(size = 20),
           legend.position = "none")
   
   bill_box
