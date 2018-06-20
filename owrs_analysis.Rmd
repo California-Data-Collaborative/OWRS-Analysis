@@ -23,9 +23,10 @@ library(gridExtra)
 library(cowplot)
 library(ggthemes)
 library(stringr)
+library(Cairo)
 
 cadc_red <- "#AA3939"
-cadc_blue <- "#758AA8"
+cadc_blue <- "#32b8df"
 cadc_yellow <- "#D4BE6A"
 
 cadc_lightblue <- "#D5DCE8"
@@ -392,6 +393,9 @@ p <- ggplot(tmp, aes(`Survey Year`, `Mean Service Charge`)) +
                 size=14)
             ) 
 
+
+img <- "img/eps/service_charge_15_vs_17.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/service_charge_15_vs_17.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -414,6 +418,8 @@ p <- ggplot(tmp, aes(`Survey Year`, `Mean Commodity Charge`)) +
                 size=14)
             )
 
+img <- "img/eps/commodity_charge_15_vs_17.eps"
+ggsave(img, p, device = cairo_ps)
 img <- "img/commodity_charge_15_vs_17.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -437,6 +443,8 @@ p <- ggplot(tmp, aes(`Survey Year`, `Mean Bill`)) +
                 size=14)
             )
 
+img <- "img/eps/total_bill_15_vs_17.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/total_bill_15_vs_17.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -483,6 +491,8 @@ This section discusses general characteristics of the rates for utilities analyz
 ```{r bill_frequency_pie, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px", fig.cap = bill_freq_cap }
 p <- plot_bill_frequency_piechart(df_final_bill_single, 2017)
 
+img <- "img/eps/bill_frequency_pie.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/bill_frequency_pie.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -498,6 +508,8 @@ tmp <- df_past_years %>% filter(Survey.Year == 2015) %>%
 
 p <- plot_bill_frequency_piechart(tmp, 2015)
 
+img <- "img/eps/bill_frequency_pie_2015.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/bill_frequency_pie_2015.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -513,6 +525,8 @@ tmp <- df_past_years %>% filter(Survey.Year == 2013) %>%
 
 p <- plot_bill_frequency_piechart(tmp, 2013)
 
+img <- "img/eps/bill_frequency_pie_2013.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/bill_frequency_pie_2013.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -525,6 +539,8 @@ bill_freq_cap <- fig_nums(name='bill_frequency_piechart', caption= 'Bill Frequen
 ```{r mean_bill_by_parts_pie, echo=FALSE, message=FALSE, out.width="600px", fig.cap = mean_bill_pie_cap}
 p <- plot_mean_bill_pie(df_final_bill_single)
 
+img <- "img/eps/mean_bill_by_parts_pie.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/mean_bill_by_parts_pie.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -536,6 +552,8 @@ mean_bill_pie_cap <- fig_nums(name='mean_bill_pie', caption= 'Average bill by pa
 ```{r rate_structure_type_pie, echo=FALSE, message=FALSE, out.width="600px"}
 p <- plot_rate_type_pie(df_final_bill_single, 2017)
 
+img <- "img/eps/rate_structure_type_pie.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/rate_structure_type_pie.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -547,6 +565,8 @@ tmp <- df_past_years %>% filter(Survey.Year == 2015)
 
 p <- plot_rate_type_pie(tmp, 2015)
 
+img <- "img/eps/rate_structure_type_pie_2015.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/rate_structure_type_pie_2015.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -560,6 +580,8 @@ tmp <- df_past_years %>% filter(Survey.Year == 2013) %>%
 
 p <- plot_rate_type_pie(tmp, 2013)
 
+img <- "img/eps/rate_structure_type_pie_2013.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/rate_structure_type_pie_2013.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -570,6 +592,8 @@ knitr::include_graphics(img)
 ```{r usage_histogram, echo=FALSE, message=FALSE, out.width="600px"}
 p <- plot_usage_histogram(df_final_bill_single)
 
+img <- "img/eps/usage_histogram.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/usage_histogram.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -582,6 +606,8 @@ knitr::include_graphics(img)
 
 p <- plot_ratio_histogram(df_final_bill_single)
 
+img <- "img/eps/service_charge_ratio_histogram.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/service_charge_ratio_histogram.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -590,6 +616,8 @@ knitr::include_graphics(img)
 ```{r total_bill_histogram, echo=FALSE, message=FALSE, out.width="600px"}
 p <- plot_bill_histogram(df_final_bill_single)
 
+img <- "img/eps/total_bill_histogram.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/total_bill_histogram.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -600,6 +628,8 @@ knitr::include_graphics(img)
 ```{r bill_quantiles_vs_usage, echo=FALSE, message=FALSE, out.width="600px"}
 p <- plot_bill_quantiles_vs_usage(df_final_bill)
 
+img <- "img/eps/bill_quantiles_vs_usage.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/bill_quantiles_vs_usage.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -609,6 +639,8 @@ knitr::include_graphics(img)
 ```{r commodity_charge_vs_usage_boxplot, echo=FALSE, message=FALSE, out.width="600px"}
 p <- boxplot_bills_vs_usage(df_final_bill, start, end, interval)
 
+img <- "img/eps/commodity_charge_vs_usage_boxplot.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/commodity_charge_vs_usage_boxplot.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -620,6 +652,8 @@ knitr::include_graphics(img)
 ```{r efficiency_goal_time_series_boxplot, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
 p <- plot_efficiency_ts(merged_OWRS)
 
+img <- "img/eps/efficiency_goal_time_series_boxplot.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/efficiency_goal_time_series_boxplot.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -629,6 +663,8 @@ knitr::include_graphics(img)
 ```{r gpcd_time_series_boxplot, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
 p <- plot_gpcd_ts(merged_OWRS)
 
+img <- "img/eps/gpcd_time_series_boxplot.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/gpcd_time_series_boxplot.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -638,6 +674,8 @@ knitr::include_graphics(img)
 ```{r boxplot_bill_by_region, echo=FALSE, message=FALSE, warning=FALSE, out.width="600px"}
 p <- boxplot_bill_by_region(eff_vs_rate)
 
+img <- "img/eps/boxplot_bill_by_region.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/boxplot_bill_by_region.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -648,6 +686,8 @@ knitr::include_graphics(img)
 
 p <- barchart_average_charge_by_region(eff_vs_rate)
 
+img <- "img/eps/average_bill_part_by_region.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/average_bill_part_by_region.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -657,6 +697,8 @@ knitr::include_graphics(img)
 ```{r efficiency_goal_vs_total_bill_scatter_trend, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
 p <- plot_eff_vs_bill(eff_vs_rate)
 
+img <- "img/eps/efficiency_goal_vs_total_bill_scatter_trend.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/efficiency_goal_vs_total_bill_scatter_trend.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -671,6 +713,8 @@ agg_eff_vs_rate <- eff_vs_rate[c("PWSID", "usage_month", "usage_year",
 
 p <- plot_eff_vs_pctFixed(eff_vs_rate)# %>% filter(usage_ccf == singleTargetValue))
 
+img <- "img/eps/efficiency_goal_vs_percent_fixed_scatter_trend.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/efficiency_goal_vs_percent_fixed_scatter_trend.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -680,6 +724,8 @@ knitr::include_graphics(img)
 # chart_count <- nrow(quali_survey %>% filter(!is.na(costs_pct_fixed)))
 p <- plot_fixed_costs_percentage_histogram(quali_survey)
 
+img <- "img/eps/fixed_cost_percentage_histogram.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/fixed_cost_percentage_histogram.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -692,6 +738,8 @@ knitr::include_graphics(img)
 p <- plot_fixed_costs_percentage_histogram(quali_survey)
 
 
+img <- "img/eps/fixed_revenue_percentage_histogram.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/fixed_revenue_percentage_histogram.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -703,6 +751,8 @@ knitr::include_graphics(img)
 
 p <- plot_fixed_costs_vs_fixed_rev_scatter(quali_survey)
 
+img <- "img/eps/fixed_costs_vs_fixed_rev_scatter.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/fixed_costs_vs_fixed_rev_scatter.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -713,6 +763,8 @@ knitr::include_graphics(img)
 ```{r income_bracket_barchart, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px" }
 p <- income_bracket_barchart(df_rates_income)
 
+img <- "img/eps/income_bracket_barchart.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/income_bracket_barchart.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -722,6 +774,8 @@ knitr::include_graphics(img)
 ```{r, affordability_histogram, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
 p <- plot_affordability_histogram(df_rates_income)
 
+img <- "img/eps/affordability_histogram.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/affordability_histogram.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -731,6 +785,8 @@ knitr::include_graphics(img)
 ```{r bill_vs_income_scatter, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
 p <- plot_bill_vs_income_scatter(df_rates_income)
 
+img <- "img/eps/bill_vs_income_scatter.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/bill_vs_income_scatter.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -787,6 +843,8 @@ This section discusses general characteristics of the rates for utilities analyz
 ```{r mean_bill_by_parts_pie_15, echo=FALSE, message=FALSE, out.width="600px", fig.cap = mean_bill_pie_cap}
 p <- plot_mean_bill_pie(df_final_bill_single)
 
+img <- "img/eps/15ccf/mean_bill_by_parts_pie_15.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/15ccf/mean_bill_by_parts_pie_15.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -801,6 +859,8 @@ mean_bill_pie_cap <- fig_nums(name='mean_bill_pie', caption= 'Average bill by pa
 
 p <- plot_ratio_histogram(df_final_bill_single)
 
+img <- "img/eps/15ccf/service_charge_ratio_histogram_15.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/15ccf/service_charge_ratio_histogram_15.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -812,6 +872,8 @@ p2 <- plot_bill_histogram(df_final_bill_15, title_text = "Total Bill - 15 CCF")
 
 p <- plot_grid(p1, p2, align = "h", nrow = 2)
 
+img <- "img/eps/comparisons/total_bill_histograms.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/comparisons/total_bill_histograms.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -827,6 +889,8 @@ knitr::include_graphics(img)
 ```{r efficiency_goal_time_series_boxplot_15, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
 p <- plot_efficiency_ts(merged_OWRS)
 
+img <- "img/eps/15ccf/efficiency_goal_time_series_boxplot_15.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/15ccf/efficiency_goal_time_series_boxplot_15.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -836,6 +900,8 @@ knitr::include_graphics(img)
 ```{r gpcd_time_series_boxplot_15, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
 p <- plot_gpcd_ts(merged_OWRS)
 
+img <- "img/eps/15ccf/gpcd_time_series_boxplot_15.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/15ccf/gpcd_time_series_boxplot_15.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -845,6 +911,8 @@ knitr::include_graphics(img)
 ```{r boxplot_bill_by_region_15, echo=FALSE, message=FALSE, warning=FALSE, out.width="600px"}
 p <- boxplot_bill_by_region(eff_vs_rate)
 
+img <- "img/eps/15ccf/boxplot_bill_by_region_15.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/15ccf/boxplot_bill_by_region_15.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -855,6 +923,8 @@ knitr::include_graphics(img)
 
 p <- barchart_average_charge_by_region(eff_vs_rate)
 
+img <- "img/eps/15ccf/average_bill_part_by_region_15.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/15ccf/average_bill_part_by_region_15.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -864,6 +934,8 @@ knitr::include_graphics(img)
 ```{r efficiency_goal_vs_total_bill_scatter_trend_15, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
 p <- plot_eff_vs_bill(eff_vs_rate)
 
+img <- "img/eps/15ccf/efficiency_goal_vs_total_bill_scatter_trend_15.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/15ccf/efficiency_goal_vs_total_bill_scatter_trend_15.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -878,6 +950,8 @@ agg_eff_vs_rate <- eff_vs_rate[c("PWSID", "usage_month", "usage_year",
 
 p <- plot_eff_vs_pctFixed(eff_vs_rate)# %>% filter(usage_ccf == singleTargetValue))
 
+img <- "img/eps/15ccf/efficiency_goal_vs_percent_fixed_scatter_trend_15.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/15ccf/efficiency_goal_vs_percent_fixed_scatter_trend_15.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -889,6 +963,8 @@ knitr::include_graphics(img)
 ```{r, affordability_histogram_15, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
 p <- plot_affordability_histogram(df_rates_income)
 
+img <- "img/eps/15ccf/affordability_histogram_15.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/15ccf/affordability_histogram_15.png"
 ggsave(img, p)
 knitr::include_graphics(img)
@@ -898,6 +974,8 @@ knitr::include_graphics(img)
 ```{r bill_vs_income_scatter_15, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
 p <- plot_bill_vs_income_scatter(df_rates_income)
 
+img <- "img/eps/15ccf/bill_vs_income_scatter_15.eps"
+ggsave(img, p, device=cairo_ps)
 img <- "img/15ccf/bill_vs_income_scatter_15.png"
 ggsave(img, p)
 knitr::include_graphics(img)
