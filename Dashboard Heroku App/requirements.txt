@@ -41,7 +41,7 @@ scipy==1.0.0
 shutilwhich==1.1.0
 six==1.11.0
 traitlets==4.3.2
-urllib3==1.22
+urllib3>=1.23
 virtualenv==15.1.0
 virtualenv-clone==0.2.6
 Werkzeug==0.14.1
