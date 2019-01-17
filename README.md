@@ -1,5 +1,5 @@
 # Open Water Rate Analysis
-Analysis of water rates collected in the OWRS format through the 2017 CaDC / Cal-Nevada water rate survey.
+Analysis of water rates collected in the OWRS format.
 
 ## [See the analysis](owrs_analysis.md) 
 
@@ -7,7 +7,7 @@ The original analysis was used as input to the [2017 Rate Survey](http://ca-nv-a
 
 ## [Get the Data](summary_table.csv)
 
-The summary data provides streamlined access to water rate data in CSV format. The summary table is derived from the [OWRS data]() maintained by the CaDC combined with publicly available data sources from the California SWRCB, DWR and the United States Census.
+The summary data provides streamlined access to water rate data in CSV format. The summary table is derived from the [OWRS data](https://github.com/California-Data-Collaborative/Open-Water-Rate-Specification) maintained by the CaDC combined with publicly available data sources from the California SWRCB, DWR and the United States Census.
 
 The fields in the data are as follows:
 
