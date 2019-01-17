@@ -983,13 +983,24 @@ knitr::include_graphics(img)
 
 
 ```{r create_summary_table, echo=FALSE}
-cols <- c('utility_name', 'effective_date', 'bill_frequency', 'bill_unit','usage_ccf', 'hhsize', 'et_amount',
-          'bill_type', 'service_charge', 'commodity_charge', 'bill', 'tier_starts')
+df_rates_income <- df_final_bill_customized %>% left_join(district_income, by=c('pwsid'='report_pwsid')) %>%
+  left_join(df_income_levels, by="median_category" ) %>%
+  mutate(bill_over_income = bill / income_placeholder,
+         bill_over_monthly_income = bill / (income_placeholder/12) )
 
-df_summary <- df_final_bill_customized[cols]
-df_summary$tier_prices <- ifelse(is.na(df_final_bill_customized$tier_prices), 
-                                 df_final_bill_customized$flat_rate,
-                                 df_final_bill_customized$tier_prices)
+df_rates_income$tier_prices_simplified <- ifelse(is.na(df_rates_income$tier_prices), 
+                                              df_rates_income$flat_rate,
+                                              df_rates_income$tier_prices)
+
+cols <- c('utility_name', 'pwsid', 'effective_date', 'bill_frequency', 'bill_unit','usage_ccf', 'hhsize', 
+          'et_amount', 'bill_type', 'service_charge', 'commodity_charge', 'bill', 'tier_starts', 
+          'tier_prices_simplified', 'median_category', 'income_placeholder')
+df_summary <- df_rates_income[cols] %>%
+  rename(median_income_category = median_category,
+         approximate_median_income = income_placeholder,
+         tier_prices = tier_prices_simplified,
+         avg_household_size = hhsize)
+
 
 write.csv(df_summary, file = 'summary_table.csv', row.names = FALSE)
 
