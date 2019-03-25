@@ -55,6 +55,7 @@ singleUtilitySim <- function(df_sample, df_OWRS_row, owrs_file, current_class){
   df_temp <- df_sample %>%
     mutate(utility_id = df_OWRS_row$utility_id,
            utility_name = df_OWRS_row$utility_name,
+           pwsid = df_OWRS_row$PWSID,
            effective_date = df_OWRS_row$effective_date,
            bill_frequency = owrs_file$metadata$bill_frequency,
            bill_unit = bu,
@@ -155,6 +156,7 @@ calculate_bills_for_all_utilities <- function(df_OWRS, supplier_report, df_sampl
     #If there is an error format the row data accordingly
     if(!is.null(owrs_file))
     {
+      
       for(j in 1:length(customer_classes))
       {
         current_class <- customer_classes[j]
@@ -170,6 +172,14 @@ calculate_bills_for_all_utilities <- function(df_OWRS, supplier_report, df_sampl
           tmp_sample <- df_sample
           tmp_sample$meter_size <- '1"'
         }
+        
+        has_pressure_charge <- grepl('pressure_zone', owrs_str) | grepl('elevation_zone', owrs_str)
+        if(has_pressure_charge){
+          tmp_sample$has_pressure_charge <- TRUE
+        }else{
+          tmp_sample$has_pressure_charge <- FALSE
+        }
+        
         
         tmp_sample$is_single <- FALSE
         tmp_row <- tmp_sample[1,]
