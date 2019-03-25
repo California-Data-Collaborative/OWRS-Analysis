@@ -233,6 +233,7 @@ names(quali_survey)[37] <- "rev_pct_fixed"
 names(quali_survey)[10] <- "agency_name"
 names(quali_survey)[5] <- "IP_address"
 names(quali_survey)[14] <- "city-town"
+quali_survey <- quali_survey[, !duplicated(colnames(quali_survey))]
 
 quali_survey$costs_pct_fixed <- as.numeric(quali_survey$costs_pct_fixed)
 quali_survey$rev_pct_fixed <- as.numeric(quali_survey$rev_pct_fixed)
@@ -735,7 +736,7 @@ knitr::include_graphics(img)
 ```{r fixed_revenue_percentage_histogram, echo=FALSE, warning=FALSE, message=FALSE, out.width="600px"}
 # chart_count <- nrow(quali_survey %>% filter(!is.na(rev_pct_fixed)))
 
-p <- plot_fixed_costs_percentage_histogram(quali_survey)
+p <- plot_fixed_revenue_percentage_histogram(quali_survey)
 
 
 img <- "img/eps/fixed_revenue_percentage_histogram.eps"
